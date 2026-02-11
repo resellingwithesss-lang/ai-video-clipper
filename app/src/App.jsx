@@ -5,77 +5,68 @@ import "./App.css";
 const API = "https://ai-clipper-backend.onrender.com";
 
 export default function App() {
-  const [url, setUrl] = useState("");
-  const [start, setStart] = useState("0");
-  const [end, setEnd] = useState("10");
-  const [status, setStatus] = useState("");
-  const [loading, setLoading] = useState(false);
+  const [email,setEmail]=useState("");
+  const [user,setUser]=useState("");
+  const [url,setUrl]=useState("");
+  const [jobs,setJobs]=useState([]);
+  const [status,setStatus]=useState("");
 
-  const pollStatus = async (jobId) => {
-    const interval = setInterval(async () => {
-      const res = await axios.get(`${API}/status/${jobId}`);
-      const jobStatus = res.data.status;
-      setStatus(jobStatus);
-
-      if (jobStatus === "complete") {
-        clearInterval(interval);
-        setLoading(false);
-        window.open(`${API}/download/${jobId}`, "_blank");
-      }
-
-      if (jobStatus === "error") {
-        clearInterval(interval);
-        setLoading(false);
-        alert("Error creating clip");
-      }
-    }, 2000);
+  const login = async ()=>{
+    const res = await axios.post(`${API}/login`,null,{params:{email}});
+    setUser(res.data.user);
+    loadHistory(res.data.user);
   };
 
-  const generateClip = async () => {
-    if (!url) return alert("Paste a YouTube URL");
-
-    try {
-      setLoading(true);
-      setStatus("Starting job...");
-
-      const res = await axios.post(`${API}/clip`, null, {
-        params: { url, start, end }
-      });
-
-      pollStatus(res.data.job_id);
-    } catch (err) {
-      console.error(err);
-      alert("Backend error");
-      setLoading(false);
-    }
+  const loadHistory = async (u)=>{
+    const res = await axios.get(`${API}/history/${u}`);
+    setJobs(res.data.jobs);
   };
+
+  const createClip = async ()=>{
+    setStatus("starting...");
+    const res = await axios.post(`${API}/clip`,null,{
+      params:{url,start:"0",end:"10",user}
+    });
+
+    const id = res.data.job_id;
+
+    const poll = setInterval(async ()=>{
+      const s = await axios.get(`${API}/status/${id}`);
+      setStatus(s.data.status);
+      if(s.data.status==="complete"){
+        clearInterval(poll);
+        window.open(`${API}/download/${id}`);
+        loadHistory(user);
+      }
+    },2000);
+  };
+
+  if(!user)
+    return (
+      <div className="container">
+        <div className="card">
+          <h1>Login</h1>
+          <input placeholder="Email" onChange={e=>setEmail(e.target.value)}/>
+          <button onClick={login}>Enter</button>
+        </div>
+      </div>
+    );
 
   return (
     <div className="container">
       <div className="card">
-        <h1>🎬 AI Video Clipper</h1>
+        <h1>AI Clipper Dashboard</h1>
 
-        <input
-          placeholder="Paste YouTube URL"
-          value={url}
-          onChange={(e) => setUrl(e.target.value)}
-        />
+        <input placeholder="YouTube URL" onChange={e=>setUrl(e.target.value)}/>
+        <button onClick={createClip}>Create Clip</button>
+        <p>{status}</p>
 
-        <div className="timeRow">
-          <input value={start} onChange={(e)=>setStart(e.target.value)} />
-          <input value={end} onChange={(e)=>setEnd(e.target.value)} />
-        </div>
-
-        <button onClick={generateClip} disabled={loading}>
-          {loading ? "Processing..." : "Generate Clip"}
-        </button>
-
-        {status && (
-          <div className="result">
-            <h3>Status:</h3>
-            <p>{status}</p>
+        <h3>Your Clips</h3>
+        {jobs.map(j=>(
+          <div key={j}>
+            <a href={`${API}/download/${j}`} target="_blank">Download {j}</a>
           </div>
-        )}
+        ))}
       </div>
     </div>
   );
