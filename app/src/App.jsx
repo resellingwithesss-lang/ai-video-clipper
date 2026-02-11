@@ -14,14 +14,20 @@ export default function App() {
     try {
       setLoading(true);
 
-      await axios.post(`${API}/login`, {
-        email: email
-      });
+      await axios.post(
+        `${API}/login`,
+        { email: email },
+        {
+          headers: {
+            "Content-Type": "application/json"
+          }
+        }
+      );
 
       setLoggedIn(true);
       setLoading(false);
     } catch (err) {
-      console.error(err);
+      console.error(err.response?.data || err);
       alert("Login failed");
       setLoading(false);
     }
@@ -43,7 +49,7 @@ export default function App() {
       window.open(res.data.download_url, "_blank");
       setLoading(false);
     } catch (err) {
-      console.error(err);
+      console.error(err.response?.data || err);
       alert("Error generating clip");
       setLoading(false);
     }
@@ -56,8 +62,8 @@ export default function App() {
         <h1>Login</h1>
 
         <input
-          style={{ width: 300, padding: 10 }}
-          placeholder="Email"
+          style={{ width: 350, padding: 12 }}
+          placeholder="Enter email"
           value={email}
           onChange={(e) => setEmail(e.target.value)}
         />
