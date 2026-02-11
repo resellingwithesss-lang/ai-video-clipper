@@ -8,27 +8,32 @@ export default function App() {
 
   const API = "https://ai-clipper-backend.onrender.com";
 
-  const generateClip = async () => {
-    try {
-      setLoading(true);
-      setDownloadUrl("");
+ const generateClip = async () => {
+  try {
+    setLoading(true);
 
-      const res = await axios.post(`${API}/clip`, null, {
+    const res = await axios.post(
+      "https://ai-clipper-backend.onrender.com/clip",
+      null,
+      {
         params: {
-          url: url.trim(),
+          url: url,
           start: "0",
-          end: "10",
-        },
-      });
+          end: "10"
+        }
+      }
+    );
 
-      setDownloadUrl(res.data.download_url);
-      setLoading(false);
-    } catch (err) {
-      console.error(err);
-      alert("Error generating clip");
-      setLoading(false);
-    }
-  };
+    setDownloadUrl(res.data.download_url);
+    setLoading(false);
+
+  } catch (err) {
+    console.error(err);
+    alert("Error generating clip");
+    setLoading(false);
+  }
+};
+
 
   return (
     <div style={{ textAlign: "center", marginTop: "100px" }}>
