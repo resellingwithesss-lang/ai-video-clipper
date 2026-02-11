@@ -12,7 +12,7 @@ export default function App() {
       setLoading(true);
       setDownloadUrl("");
 
-      const res = await axios.post("http://localhost:8000/clip", null, {
+      const res = await axios.post("https://ai-clipper-backend.onrender.com/clip", null, {
         params: {
           url: url,
           start: "0",
