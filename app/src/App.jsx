@@ -3,37 +3,37 @@ import { useState } from "react";
 
 export default function App() {
   const [url, setUrl] = useState("");
-  const [downloadUrl, setDownloadUrl] = useState("");
   const [loading, setLoading] = useState(false);
 
   const API = "https://ai-clipper-backend.onrender.com";
 
- const generateClip = async () => {
-  try {
-    setLoading(true);
+  const generateClip = async () => {
+    if (!url) {
+      alert("Paste a YouTube URL first");
+      return;
+    }
 
-    const res = await axios.post(
-      "https://ai-clipper-backend.onrender.com/clip",
-      null,
-      {
+    try {
+      setLoading(true);
+
+      const res = await axios.post(`${API}/clip`, null, {
         params: {
           url: url,
           start: "0",
-          end: "10"
-        }
-      }
-    );
+          end: "10",
+        },
+      });
 
-    setDownloadUrl(res.data.download_url);
-    setLoading(false);
+      // open download automatically
+      window.open(res.data.download_url, "_blank");
 
-  } catch (err) {
-    console.error(err);
-    alert("Error generating clip");
-    setLoading(false);
-  }
-};
-
+    } catch (err) {
+      console.error(err);
+      alert("Error generating clip");
+    } finally {
+      setLoading(false);
+    }
+  };
 
   return (
     <div style={{ textAlign: "center", marginTop: "100px" }}>
@@ -51,14 +51,6 @@ export default function App() {
       <button onClick={generateClip} disabled={loading}>
         {loading ? "Generating..." : "Generate Clip"}
       </button>
-
-      <br /><br />
-
-      {downloadUrl && (
-        <a href={downloadUrl} target="_blank">
-          Download Clip
-        </a>
-      )}
     </div>
   );
 }
