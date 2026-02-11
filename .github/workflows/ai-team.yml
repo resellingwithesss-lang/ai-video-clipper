@@ -1,10 +1,8 @@
 name: AI Team Continuous Improvement
 
 on:
-  push:
-    branches: ["main"]
   schedule:
-    - cron: "0 8 * * *"
+    - cron: "0 8 * * *"   # Runs once per day only
 
 jobs:
   improve-project:
@@ -21,7 +19,7 @@ jobs:
 
       - name: Install OpenAI SDK
         run: |
-          pip install openai
+          pip install --upgrade openai
 
       - name: Run AI Worker
         env:
