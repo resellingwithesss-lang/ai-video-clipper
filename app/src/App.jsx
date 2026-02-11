@@ -1,52 +1,84 @@
 import axios from "axios";
 import { useState } from "react";
+import "./App.css";
+
+const API = "https://ai-clipper-backend.onrender.com";
 
 export default function App() {
-  const [url,setUrl]=useState("");
-  const [start,setStart]=useState("0");
-  const [end,setEnd]=useState("10");
-  const [status,setStatus]=useState("");
+  const [url, setUrl] = useState("");
+  const [start, setStart] = useState("0");
+  const [end, setEnd] = useState("10");
+  const [loading, setLoading] = useState(false);
+  const [downloadUrl, setDownloadUrl] = useState("");
 
-  const API="https://ai-clipper-backend.onrender.com";
+  const generateClip = async () => {
+    if (!url) {
+      alert("Paste a YouTube URL first");
+      return;
+    }
 
-  const generateClip=async()=>{
-    setStatus("Starting job...");
-    const res=await axios.post(`${API}/clip`,null,{
-      params:{url,start,end}
-    });
+    try {
+      setLoading(true);
+      setDownloadUrl("");
 
-    const job=res.data.job_id;
-    setStatus("Processing video...");
+      const res = await axios.post(`${API}/clip`, null, {
+        params: { url, start, end }
+      });
 
-    const poll=setInterval(async()=>{
-      const s=await axios.get(`${API}/status/${job}`);
-      if(s.data.status==="done"){
-        clearInterval(poll);
-        window.open(`${API}/download/${job}`,"_blank");
-        setStatus("Done!");
-      }
-    },3000);
+      setDownloadUrl(res.data.download_url);
+    } catch (err) {
+      console.error(err);
+      alert("Clip generation failed");
+    }
+
+    setLoading(false);
   };
 
   return (
-    <div style={{textAlign:"center",marginTop:100}}>
-      <h1>AI Video Clipper</h1>
+    <div className="container">
+      <div className="card">
 
-      <input placeholder="YouTube URL"
-        value={url} onChange={e=>setUrl(e.target.value)} />
+        <h1>🎬 AI Video Clipper</h1>
+        <p>Create Shorts & TikToks in seconds</p>
 
-      <br/><br/>
+        <input
+          placeholder="Paste YouTube URL"
+          value={url}
+          onChange={(e) => setUrl(e.target.value)}
+        />
 
-      Start seconds:
-      <input value={start} onChange={e=>setStart(e.target.value)} />
+        <div className="timeRow">
+          <div>
+            <label>Start Time (seconds)</label>
+            <input
+              value={start}
+              onChange={(e) => setStart(e.target.value)}
+            />
+          </div>
 
-      End seconds:
-      <input value={end} onChange={e=>setEnd(e.target.value)} />
+          <div>
+            <label>End Time (seconds)</label>
+            <input
+              value={end}
+              onChange={(e) => setEnd(e.target.value)}
+            />
+          </div>
+        </div>
 
-      <br/><br/>
-      <button onClick={generateClip}>Generate</button>
+        <button onClick={generateClip} disabled={loading}>
+          {loading ? "Generating Clip..." : "Generate Clip"}
+        </button>
 
-      <p>{status}</p>
+        {downloadUrl && (
+          <div className="result">
+            <h3>✅ Clip Ready</h3>
+            <a href={downloadUrl} target="_blank">
+              Download Video
+            </a>
+          </div>
+        )}
+
+      </div>
     </div>
   );
 }
