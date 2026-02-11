@@ -4,10 +4,11 @@ from fastapi.responses import FileResponse
 import subprocess
 import os
 import uuid
+import logging
 
 app = FastAPI()
 
-# Allow frontend to call backend
+# Allow frontend to talk to backend
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
@@ -16,28 +17,27 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger("ai-clipper")
+
 OUTPUT_DIR = "outputs"
 os.makedirs(OUTPUT_DIR, exist_ok=True)
 
-# ---------- HEALTH CHECK ----------
+# ---------------- HOME ----------------
 @app.get("/")
 def home():
     return {"status": "AI Clipper Running 🚀"}
 
-# ---------- LOGIN ----------
+# ---------------- LOGIN (NEW) ----------------
 @app.post("/login")
 def login(data: dict):
     email = data.get("email")
-
     if not email:
         raise HTTPException(status_code=400, detail="Email required")
 
-    return {
-        "status": "logged_in",
-        "email": email
-    }
+    return {"status": "logged_in"}
 
-# ---------- GENERATE CLIP ----------
+# ---------------- CLIP ----------------
 @app.post("/clip")
 def clip(url: str, start: str, end: str):
     try:
@@ -47,16 +47,17 @@ def clip(url: str, start: str, end: str):
         clip_path = f"{OUTPUT_DIR}/{job_id}_clip.mp4"
 
         # Download video
-        subprocess.run([
+        download_cmd = [
             "yt-dlp",
             "-f", "bestvideo+bestaudio",
             "--merge-output-format", "mp4",
             "-o", video_path,
             url
-        ], check=True)
+        ]
+        subprocess.run(download_cmd, check=True)
 
         # Cut clip
-        subprocess.run([
+        clip_cmd = [
             "ffmpeg",
             "-y",
             "-ss", start,
@@ -67,7 +68,8 @@ def clip(url: str, start: str, end: str):
             "-crf", "18",
             "-c:a", "copy",
             clip_path
-        ], check=True)
+        ]
+        subprocess.run(clip_cmd, check=True)
 
         return {
             "status": "success",
@@ -77,11 +79,10 @@ def clip(url: str, start: str, end: str):
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
-# ---------- DOWNLOAD FILE ----------
+# ---------------- DOWNLOAD ----------------
 @app.get("/download/{job_id}")
 def download(job_id: str):
     file_path = f"{OUTPUT_DIR}/{job_id}_clip.mp4"
-
     if not os.path.exists(file_path):
         raise HTTPException(status_code=404, detail="Clip not found")
 
