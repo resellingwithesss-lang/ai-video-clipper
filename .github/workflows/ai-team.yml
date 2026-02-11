@@ -19,13 +19,12 @@ jobs:
         with:
           python-version: "3.11"
 
-      - name: Install dependencies
+      - name: Install OpenAI SDK
         run: |
           pip install openai
 
-      - name: Run AI worker
+      - name: Run AI Worker
         env:
           OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
         run: |
           python scripts/ai_worker.py
-
