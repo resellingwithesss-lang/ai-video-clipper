@@ -33,11 +33,12 @@ Improve this code:
 CODE:
 {code}
 """
-    res = client.chat.completions.create(
-        model="gpt-5-mini",
-        messages=[{"role":"user","content":prompt}],
-        temperature=0.3
-    )
+  res = client.chat.completions.create(
+    model="gpt-5-mini",
+    messages=[{"role":"user","content":prompt}]
+)
+
+
     return res.choices[0].message.content
 
 files = get_repo_files()
