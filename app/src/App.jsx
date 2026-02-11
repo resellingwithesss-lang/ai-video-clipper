@@ -2,55 +2,51 @@ import axios from "axios";
 import { useState } from "react";
 
 export default function App() {
-  const [url, setUrl] = useState("");
-  const [loading, setLoading] = useState(false);
+  const [url,setUrl]=useState("");
+  const [start,setStart]=useState("0");
+  const [end,setEnd]=useState("10");
+  const [status,setStatus]=useState("");
 
-  const API = "https://ai-clipper-backend.onrender.com";
+  const API="https://ai-clipper-backend.onrender.com";
 
-  const generateClip = async () => {
-    if (!url) {
-      alert("Paste a YouTube URL first");
-      return;
-    }
+  const generateClip=async()=>{
+    setStatus("Starting job...");
+    const res=await axios.post(`${API}/clip`,null,{
+      params:{url,start,end}
+    });
 
-    try {
-      setLoading(true);
+    const job=res.data.job_id;
+    setStatus("Processing video...");
 
-      const res = await axios.post(`${API}/clip`, null, {
-        params: {
-          url: url,
-          start: "0",
-          end: "10",
-        },
-      });
-
-      // open download automatically
-      window.open(res.data.download_url, "_blank");
-
-    } catch (err) {
-      console.error(err);
-      alert("Error generating clip");
-    } finally {
-      setLoading(false);
-    }
+    const poll=setInterval(async()=>{
+      const s=await axios.get(`${API}/status/${job}`);
+      if(s.data.status==="done"){
+        clearInterval(poll);
+        window.open(`${API}/download/${job}`,"_blank");
+        setStatus("Done!");
+      }
+    },3000);
   };
 
   return (
-    <div style={{ textAlign: "center", marginTop: "100px" }}>
+    <div style={{textAlign:"center",marginTop:100}}>
       <h1>AI Video Clipper</h1>
 
-      <input
-        style={{ width: 400, padding: 10 }}
-        placeholder="Paste YouTube URL"
-        value={url}
-        onChange={(e) => setUrl(e.target.value)}
-      />
+      <input placeholder="YouTube URL"
+        value={url} onChange={e=>setUrl(e.target.value)} />
 
-      <br /><br />
+      <br/><br/>
 
-      <button onClick={generateClip} disabled={loading}>
-        {loading ? "Generating..." : "Generate Clip"}
-      </button>
+      Start seconds:
+      <input value={start} onChange={e=>setStart(e.target.value)} />
+
+      End seconds:
+      <input value={end} onChange={e=>setEnd(e.target.value)} />
+
+      <br/><br/>
+      <button onClick={generateClip}>Generate</button>
+
+      <p>{status}</p>
     </div>
   );
 }
