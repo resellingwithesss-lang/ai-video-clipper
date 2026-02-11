@@ -1,71 +1,58 @@
-import { useState } from "react";
 import axios from "axios";
-import "./App.css";
+import { useState } from "react";
 
 export default function App() {
   const [url, setUrl] = useState("");
   const [downloadUrl, setDownloadUrl] = useState("");
   const [loading, setLoading] = useState(false);
 
+  const API = "https://ai-clipper-backend.onrender.com";
+
   const generateClip = async () => {
     try {
       setLoading(true);
       setDownloadUrl("");
 
-      const res = await axios.post("https://ai-clipper-backend.onrender.com/clip", null, {
+      const res = await axios.post(`${API}/clip`, null, {
         params: {
-          url: url,
+          url: url.trim(),
           start: "0",
-          end: "10"
-        }
+          end: "10",
+        },
       });
 
       setDownloadUrl(res.data.download_url);
       setLoading(false);
-
     } catch (err) {
-      setLoading(false);
+      console.error(err);
       alert("Error generating clip");
+      setLoading(false);
     }
   };
 
-  // REAL FILE DOWNLOAD (fixes blocked tab issue)
-  const downloadClip = async () => {
-    const response = await fetch(downloadUrl);
-    const blob = await response.blob();
-
-    const fileUrl = window.URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.href = fileUrl;
-    a.download = "clip.mp4";
-    document.body.appendChild(a);
-    a.click();
-    a.remove();
-  };
-
   return (
-    <div className="container">
+    <div style={{ textAlign: "center", marginTop: "100px" }}>
       <h1>AI Video Clipper</h1>
 
       <input
-        placeholder="Paste YouTube link"
+        style={{ width: 400, padding: 10 }}
+        placeholder="Paste YouTube URL"
         value={url}
         onChange={(e) => setUrl(e.target.value)}
       />
 
-      <br />
+      <br /><br />
 
       <button onClick={generateClip} disabled={loading}>
-        {loading ? "Generating..." : "Generate AI Clip"}
+        {loading ? "Generating..." : "Generate Clip"}
       </button>
 
+      <br /><br />
+
       {downloadUrl && (
-        <>
-          <br />
-          <button onClick={downloadClip}>
-            Download Clip
-          </button>
-        </>
+        <a href={downloadUrl} target="_blank">
+          Download Clip
+        </a>
       )}
     </div>
   );
