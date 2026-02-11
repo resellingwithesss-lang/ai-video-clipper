@@ -8,38 +8,52 @@ export default function App() {
   const [url, setUrl] = useState("");
   const [start, setStart] = useState("0");
   const [end, setEnd] = useState("10");
+  const [status, setStatus] = useState("");
   const [loading, setLoading] = useState(false);
-  const [downloadUrl, setDownloadUrl] = useState("");
+
+  const pollStatus = async (jobId) => {
+    const interval = setInterval(async () => {
+      const res = await axios.get(`${API}/status/${jobId}`);
+      const jobStatus = res.data.status;
+      setStatus(jobStatus);
+
+      if (jobStatus === "complete") {
+        clearInterval(interval);
+        setLoading(false);
+        window.open(`${API}/download/${jobId}`, "_blank");
+      }
+
+      if (jobStatus === "error") {
+        clearInterval(interval);
+        setLoading(false);
+        alert("Error creating clip");
+      }
+    }, 2000);
+  };
 
   const generateClip = async () => {
-    if (!url) {
-      alert("Paste a YouTube URL first");
-      return;
-    }
+    if (!url) return alert("Paste a YouTube URL");
 
     try {
       setLoading(true);
-      setDownloadUrl("");
+      setStatus("Starting job...");
 
       const res = await axios.post(`${API}/clip`, null, {
         params: { url, start, end }
       });
 
-      setDownloadUrl(res.data.download_url);
+      pollStatus(res.data.job_id);
     } catch (err) {
       console.error(err);
-      alert("Clip generation failed");
+      alert("Backend error");
+      setLoading(false);
     }
-
-    setLoading(false);
   };
 
   return (
     <div className="container">
       <div className="card">
-
         <h1>🎬 AI Video Clipper</h1>
-        <p>Create Shorts & TikToks in seconds</p>
 
         <input
           placeholder="Paste YouTube URL"
@@ -48,36 +62,20 @@ export default function App() {
         />
 
         <div className="timeRow">
-          <div>
-            <label>Start Time (seconds)</label>
-            <input
-              value={start}
-              onChange={(e) => setStart(e.target.value)}
-            />
-          </div>
-
-          <div>
-            <label>End Time (seconds)</label>
-            <input
-              value={end}
-              onChange={(e) => setEnd(e.target.value)}
-            />
-          </div>
+          <input value={start} onChange={(e)=>setStart(e.target.value)} />
+          <input value={end} onChange={(e)=>setEnd(e.target.value)} />
         </div>
 
         <button onClick={generateClip} disabled={loading}>
-          {loading ? "Generating Clip..." : "Generate Clip"}
+          {loading ? "Processing..." : "Generate Clip"}
         </button>
 
-        {downloadUrl && (
+        {status && (
           <div className="result">
-            <h3>✅ Clip Ready</h3>
-            <a href={downloadUrl} target="_blank">
-              Download Video
-            </a>
+            <h3>Status:</h3>
+            <p>{status}</p>
           </div>
         )}
-
       </div>
     </div>
   );
