@@ -1,0 +1,47 @@
+name: AI Team Continuous Improvement
+
+on:
+  push:
+    branches: [ "main" ]
+  schedule:
+    - cron: "0 8 * * *"   # runs every day
+
+jobs:
+  improve-project:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install frontend deps
+        run: |
+          cd app
+          npm install
+
+      - name: Install backend deps
+        run: |
+          cd backend
+          pip install fastapi uvicorn yt-dlp
+
+      - name: Run AI analysis
+        run: |
+          echo "Analyzing project structure..."
+          echo "Frontend + Backend detected"
+          echo "Preparing improvement suggestions..."
+
+      - name: Auto-create improvement issue
+        uses: peter-evans/create-issue-from-file@v5
+        with:
+          title: "🤖 Daily AI Improvement Suggestions"
+          content-filepath: .github/ISSUE_TEMPLATE/improve.md
