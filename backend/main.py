@@ -7,7 +7,7 @@ import uuid
 
 app = FastAPI()
 
-# allow frontend to call backend
+# Allow frontend to call backend
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
@@ -19,17 +19,12 @@ app.add_middleware(
 OUTPUT_DIR = "outputs"
 os.makedirs(OUTPUT_DIR, exist_ok=True)
 
-# -------------------------
-# HEALTH CHECK
-# -------------------------
+# ---------- HEALTH CHECK ----------
 @app.get("/")
 def home():
     return {"status": "AI Clipper Running 🚀"}
 
-
-# -------------------------
-# SIMPLE LOGIN (MVP)
-# -------------------------
+# ---------- LOGIN ----------
 @app.post("/login")
 def login(data: dict):
     email = data.get("email")
@@ -37,21 +32,21 @@ def login(data: dict):
     if not email:
         raise HTTPException(status_code=400, detail="Email required")
 
-    # For now any email works (MVP auth)
-    return {"status": "logged_in", "email": email}
+    return {
+        "status": "logged_in",
+        "email": email
+    }
 
-
-# -------------------------
-# CREATE CLIP
-# -------------------------
+# ---------- GENERATE CLIP ----------
 @app.post("/clip")
 def clip(url: str, start: str, end: str):
     try:
         job_id = str(uuid.uuid4())
+
         video_path = f"{job_id}.mp4"
         clip_path = f"{OUTPUT_DIR}/{job_id}_clip.mp4"
 
-        # download youtube video
+        # Download video
         subprocess.run([
             "yt-dlp",
             "-f", "bestvideo+bestaudio",
@@ -60,7 +55,7 @@ def clip(url: str, start: str, end: str):
             url
         ], check=True)
 
-        # cut clip
+        # Cut clip
         subprocess.run([
             "ffmpeg",
             "-y",
@@ -82,10 +77,7 @@ def clip(url: str, start: str, end: str):
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
-
-# -------------------------
-# DOWNLOAD FILE
-# -------------------------
+# ---------- DOWNLOAD FILE ----------
 @app.get("/download/{job_id}")
 def download(job_id: str):
     file_path = f"{OUTPUT_DIR}/{job_id}_clip.mp4"
