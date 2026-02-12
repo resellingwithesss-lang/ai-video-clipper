@@ -12,6 +12,7 @@ COPY . .
 
 RUN pip install --no-cache-dir \
     fastapi \
+    "pydantic[email]" \
     uvicorn \
     python-multipart \
     yt-dlp
