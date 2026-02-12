@@ -8,20 +8,31 @@ function App() {
   const [error, setError] = useState("");
   const [downloadUrl, setDownloadUrl] = useState("");
 
+  const validateTime = (time) => {
+    // Simple HH:MM:SS format check
+    return /^\d{2}:\d{2}:\d{2}$/.test(time);
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError("");
     setDownloadUrl("");
+
+    if (!validateTime(start)) {
+      setError("Start Time must be in HH:MM:SS format.");
+      return;
+    }
+    if (!validateTime(end)) {
+      setError("End Time must be in HH:MM:SS format.");
+      return;
+    }
+
     setLoading(true);
 
     try {
       const response = await fetch(
-        `https://ai-clipper-backend.onrender.com/clip?url=${encodeURIComponent(
-          url
-        )}&start=${start}&end=${end}`,
-        {
-          method: "POST",
-        }
+        `http://localhost:8000/clip?url=${encodeURIComponent(url)}&start=${start}&end=${end}`,
+        { method: "POST" }
       );
 
       const data = await response.json();
@@ -31,8 +42,9 @@ function App() {
       }
 
       setDownloadUrl(
-        `https://ai-clipper-backend.onrender.com/download/${data.job_id}`
+        `http://localhost:8000/download/${data.job_id}`
       );
+
     } catch (err) {
       setError(err.message);
     }
@@ -43,100 +55,150 @@ function App() {
   return (
     <div
       style={{
-        maxWidth: "500px",
-        margin: "50px auto",
-        padding: "30px",
+        maxWidth: "480px",
+        margin: "60px auto",
+        padding: "32px 28px",
         borderRadius: "12px",
-        boxShadow: "0 8px 20px rgba(0,0,0,0.1)",
-        fontFamily: "Arial, sans-serif",
+        boxShadow: "0 8px 24px rgba(0,0,0,0.12)",
+        fontFamily: "'Segoe UI', Tahoma, Geneva, Verdana, sans-serif",
+        backgroundColor: "#fff",
       }}
+      aria-live="polite"
     >
-      <h1 style={{ textAlign: "center" }}>AI Video Clipper</h1>
+      <h1 style={{ textAlign: "center", marginBottom: "30px", color: "#222" }}>AI Video Clipper (Local)</h1>
 
-      <form onSubmit={handleSubmit}>
+      <form onSubmit={handleSubmit} noValidate>
+        <label htmlFor="urlInput" style={{ display: "block", marginBottom: "6px", fontWeight: "600", color: "#333" }}>
+          YouTube URL
+        </label>
         <input
-          type="text"
+          id="urlInput"
+          type="url"
           placeholder="Paste YouTube URL"
           value={url}
           onChange={(e) => setUrl(e.target.value)}
           required
+          autoComplete="off"
           style={{
             width: "100%",
-            padding: "10px",
-            marginBottom: "15px",
+            padding: "10px 12px",
+            marginBottom: "22px",
             borderRadius: "6px",
-            border: "1px solid #ccc",
+            border: "1.5px solid #ccc",
+            fontSize: "15px",
+            transition: "border-color 0.3s",
           }}
+          aria-describedby="urlHelp"
+          aria-invalid={error.includes("URL") ? "true" : "false"}
         />
+        <small id="urlHelp" style={{ display: "block", marginBottom: "18px", color: "#666" }}>
+          Enter the full YouTube URL you want to clip.
+        </small>
 
+        <label htmlFor="startInput" style={{ display: "block", marginBottom: "6px", fontWeight: "600", color: "#333" }}>
+          Start Time (HH:MM:SS)
+        </label>
         <input
+          id="startInput"
           type="text"
-          placeholder="Start Time (HH:MM:SS)"
+          placeholder="00:00:00"
           value={start}
           onChange={(e) => setStart(e.target.value)}
           required
+          autoComplete="off"
+          inputMode="numeric"
           style={{
             width: "100%",
-            padding: "10px",
-            marginBottom: "5px",
+            padding: "10px 12px",
+            marginBottom: "20px",
             borderRadius: "6px",
-            border: "1px solid #ccc",
+            border: "1.5px solid #ccc",
+            fontSize: "15px",
+            transition: "border-color 0.3s",
           }}
+          aria-invalid={error.includes("Start Time") ? "true" : "false"}
         />
-        <p style={{ fontSize: "12px", color: "#666" }}>
-          Format: HH:MM:SS (example: 00:00:10)
-        </p>
 
+        <label htmlFor="endInput" style={{ display: "block", marginBottom: "6px", fontWeight: "600", color: "#333" }}>
+          End Time (HH:MM:SS)
+        </label>
         <input
+          id="endInput"
           type="text"
-          placeholder="End Time (HH:MM:SS)"
+          placeholder="00:00:00"
           value={end}
           onChange={(e) => setEnd(e.target.value)}
           required
+          autoComplete="off"
+          inputMode="numeric"
           style={{
             width: "100%",
-            padding: "10px",
-            marginBottom: "5px",
+            padding: "10px 12px",
+            marginBottom: "28px",
             borderRadius: "6px",
-            border: "1px solid #ccc",
+            border: "1.5px solid #ccc",
+            fontSize: "15px",
+            transition: "border-color 0.3s",
           }}
+          aria-invalid={error.includes("End Time") ? "true" : "false"}
         />
-        <p style={{ fontSize: "12px", color: "#666" }}>
-          Format: HH:MM:SS (example: 00:01:00)
-        </p>
 
         <button
           type="submit"
           disabled={loading}
           style={{
             width: "100%",
-            padding: "12px",
-            marginTop: "15px",
-            backgroundColor: "#007bff",
+            padding: "14px",
+            backgroundColor: loading ? "#0056b3" : "#007bff",
             color: "white",
             border: "none",
             borderRadius: "6px",
-            cursor: "pointer",
-            fontSize: "16px",
+            cursor: loading ? "progress" : "pointer",
+            fontSize: "17px",
+            fontWeight: "600",
+            boxShadow: loading ? "none" : "0 4px 10px rgba(0,123,255,0.3)",
+            transition: "background-color 0.3s, box-shadow 0.3s",
           }}
+          aria-busy={loading}
         >
-          {loading ? "Generating..." : "Generate Clip"}
+          {loading ? "Generating your clip..." : "Generate Clip"}
         </button>
       </form>
 
       {error && (
-        <p style={{ color: "red", marginTop: "15px" }}>
+        <p
+          role="alert"
+          style={{
+            color: "#d93025",
+            marginTop: "22px",
+            fontWeight: "600",
+            backgroundColor: "#fce8e6",
+            padding: "12px 16px",
+            borderRadius: "6px",
+            border: "1px solid #d93025",
+          }}
+        >
           {error}
         </p>
       )}
 
       {downloadUrl && (
-        <div style={{ marginTop: "20px" }}>
+        <div
+          style={{
+            marginTop: "30px",
+            backgroundColor: "#d7f0ff",
+            borderRadius: "8px",
+            padding: "14px 20px",
+            textAlign: "center",
+            border: "1px solid #a1d4fb",
+          }}
+        >
           <a
             href={downloadUrl}
             target="_blank"
             rel="noopener noreferrer"
-            style={{ color: "#007bff", fontWeight: "bold" }}
+            style={{ color: "#007bff", fontWeight: "700", fontSize: "16px", textDecoration: "underline" }}
+            aria-label="Download your clipped video"
           >
             Download Your Clip
           </a>
