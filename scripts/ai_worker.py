@@ -6,7 +6,7 @@ from openai import OpenAI
 client = OpenAI(api_key=os.environ["OPENAI_API_KEY"])
 
 PROTECTED_FILES = ["login", "auth", "security"]
-MAX_CHANGE_PERCENT = 0.35  # prevents large rewrites
+MAX_CHANGE_PERCENT = 0.75  # allows improvement but blocks full rewrites
 
 
 # ---------------- FILE DISCOVERY ----------------
@@ -57,18 +57,17 @@ def is_safe_change(original, modified):
 # ---------------- AI EDIT ----------------
 def improve_code(code):
     prompt = f"""
-You are a senior FastAPI backend engineer improving a SaaS project.
+You are a senior FastAPI backend engineer improving a SaaS backend.
 
 STRICT RULES:
 - Do NOT delete endpoints.
 - Do NOT remove routes.
-- Do NOT change authentication logic.
-- Do NOT modify deployment config.
-- Improve performance, safety, and structure only.
-- Keep edits minimal.
-- Return FULL updated file content.
-- Do NOT include explanations.
-- Return code only.
+- Do NOT modify authentication.
+- Do NOT rewrite entire architecture.
+- Improve structure, safety, validation, and performance.
+- Keep changes minimal and incremental.
+- Return FULL updated file.
+- Return code only. No explanations.
 
 CODE:
 {code}
@@ -110,7 +109,6 @@ def main():
             continue
 
         write_file(file, improved_code)
-
         subprocess.run(["git", "add", file])
 
     subprocess.run(["git", "commit", "-m", "🤖 AI backend improvements"], check=False)

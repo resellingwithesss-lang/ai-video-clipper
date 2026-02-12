@@ -28,6 +28,11 @@ jobs:
       - name: Install OpenAI
         run: pip install --upgrade openai
 
+      - name: Configure Git
+        run: |
+          git config --global user.email "ai-bot@users.noreply.github.com"
+          git config --global user.name "AI Bot"
+
       - name: Run AI Worker
         env:
           OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
@@ -37,11 +42,14 @@ jobs:
         uses: peter-evans/create-pull-request@v6
         with:
           branch: ai-improvements
-          title: "🤖 AI Backend Review"
+          title: "🤖 AI Backend Improvements"
           body: |
-            Automated backend review.
+            Automated backend improvements with guardrails enabled.
 
-            Safe suggestions only.
+            - Safe incremental edits
+            - Authentication protected
+            - Change size limited
+            - Manual merge required
 
-          commit-message: "🤖 AI backend review"
+          commit-message: "🤖 AI backend improvements"
           base: main
