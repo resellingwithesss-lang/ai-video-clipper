@@ -40,6 +40,8 @@ function App() {
     setLoading(false);
   };
 
+  const isSubmitDisabled = loading || !url.trim() || !validYouTubeUrl(url);
+
   return (
     <div style={styles.page}>
       <nav style={styles.sidebar} aria-label="Primary">
@@ -68,7 +70,7 @@ function App() {
 
       <main style={styles.main}>
         <div style={styles.container}>
-          <h1 style={{ marginBottom: 32, fontWeight: "700" }}>
+          <h1 style={{ marginBottom: 36, fontWeight: "700", lineHeight: 1.2 }}>
             AI Clip Generator Studio
           </h1>
 
@@ -100,6 +102,7 @@ function App() {
               disabled={loading}
               autoComplete="off"
               autoFocus
+              aria-invalid={url && !validYouTubeUrl(url)}
             />
             <small
               id="urlHelp"
@@ -110,6 +113,7 @@ function App() {
                     ? "#dc2626"
                     : "#6b7280",
               }}
+              role="alert"
             >
               Enter a valid YouTube video URL
             </small>
@@ -195,19 +199,15 @@ function App() {
 
             <button
               type="submit"
-              disabled={
-                loading || !url.trim() || !validYouTubeUrl(url)
-              }
+              disabled={isSubmitDisabled}
               style={{
                 ...styles.button,
-                opacity: loading || !url.trim() || !validYouTubeUrl(url) ? 0.7 : 1,
-                cursor:
-                  loading || !url.trim() || !validYouTubeUrl(url)
-                    ? "not-allowed"
-                    : "pointer",
+                opacity: isSubmitDisabled ? 0.7 : 1,
+                cursor: isSubmitDisabled ? "not-allowed" : "pointer",
               }}
               aria-live="polite"
               aria-label={loading ? "Processing AI clip" : "Generate AI Clip"}
+              aria-disabled={isSubmitDisabled}
             >
               {loading ? (
                 <span>
@@ -227,11 +227,12 @@ function App() {
               <p
                 role="alert"
                 style={{
-                  marginTop: 20,
+                  marginTop: 22,
                   color: message.startsWith("⚠️ Error") ? "#dc2626" : "#16a34a",
                   fontWeight: "600",
                   lineHeight: 1.5,
                   minHeight: 24,
+                  wordBreak: "break-word",
                 }}
               >
                 {message}
@@ -303,19 +304,19 @@ const styles = {
     boxShadow: "0 12px 30px rgba(0,0,0,0.12)",
     display: "flex",
     flexDirection: "column",
-    gap: 24,
+    gap: 28,
   },
   label: {
     fontWeight: "700",
     fontSize: "15px",
-    marginBottom: 8,
+    marginBottom: 10,
     display: "block",
     color: "#374151",
   },
   input: {
     width: "100%",
     padding: "14px 16px",
-    marginBottom: 0,
+    marginBottom: 6,
     borderRadius: 8,
     border: "1.8px solid #cbd5e1",
     fontSize: 15,
@@ -327,14 +328,14 @@ const styles = {
   helpText: {
     fontSize: 13,
     color: "#6b7280",
-    marginTop: 6,
-    marginBottom: 18,
+    marginTop: 2,
+    marginBottom: 20,
     fontWeight: 400,
   },
   timeInputsWrapper: {
     display: "flex",
-    gap: 32,
-    marginBottom: 26,
+    gap: 28,
+    marginBottom: 30,
   },
   timeInputContainer: {
     flex: 1,
@@ -350,10 +351,13 @@ const styles = {
     borderRadius: 12,
     fontSize: 17,
     fontWeight: "700",
-    transition: "background-color 0.3s ease",
+    transition: "background-color 0.3s ease, opacity 0.3s ease",
     userSelect: "none",
     boxShadow:
       "0 4px 8px rgba(37, 99, 235, 0.4), 0 1px 2px rgba(0, 0, 0, 0.1)",
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
   },
   spinner: {
     display: "inline-block",
