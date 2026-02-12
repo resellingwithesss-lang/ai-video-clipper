@@ -10,10 +10,14 @@ function App() {
   const [message, setMessage] = useState("");
 
   const validYouTubeUrl = (value) =>
-    /^https?:\/\/(www\.)?youtube\.com\/watch\?v=\S+|youtu\.be\/\S+/.test(value.trim());
+    /^https?:\/\/(www\.)?(youtube\.com\/watch\?v=|youtu\.be\/)\S+/.test(value.trim());
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    if (!validYouTubeUrl(url.trim())) {
+      setMessage("⚠️ Please enter a valid YouTube URL.");
+      return;
+    }
     setLoading(true);
     setMessage("Processing clip with AI...");
 
@@ -42,7 +46,7 @@ function App() {
 
   return (
     <div style={styles.page}>
-      <nav style={styles.sidebar} aria-label="Primary">
+      <nav style={styles.sidebar} aria-label="Primary navigation">
         <h2 style={styles.sidebarHeader}>🎬 Creator AI</h2>
         <ul style={styles.navList}>
           {["Dashboard", "My Clips", "Analytics", "AI Tools"].map((item) => (
@@ -56,7 +60,13 @@ function App() {
               onMouseOver={(e) =>
                 (e.currentTarget.style.backgroundColor = "#1f2937")
               }
+              onFocus={(e) =>
+                (e.currentTarget.style.backgroundColor = "#1f2937")
+              }
               onMouseOut={(e) =>
+                (e.currentTarget.style.backgroundColor = "transparent")
+              }
+              onBlur={(e) =>
                 (e.currentTarget.style.backgroundColor = "transparent")
               }
             >
@@ -78,6 +88,7 @@ function App() {
             aria-live="polite"
             aria-busy={loading}
             noValidate
+            autoComplete="off"
           >
             <label htmlFor="urlInput" style={styles.label}>
               YouTube URL
@@ -100,6 +111,8 @@ function App() {
               disabled={loading}
               autoComplete="off"
               autoFocus
+              aria-invalid={url && !validYouTubeUrl(url)}
+              aria-required="true"
             />
             <small
               id="urlHelp"
@@ -124,13 +137,16 @@ function App() {
                   type="time"
                   step="1"
                   value={start}
-                  onChange={(e) => setStart(e.target.value)}
+                  onChange={(e) => {
+                    const val = e.target.value;
+                    if(val <= end) setStart(val);
+                  }}
                   style={styles.input}
                   max={end}
                   aria-describedby="startHelp"
                   disabled={loading}
                   pattern="\d{2}:\d{2}:\d{2}"
-                  aria-label="Clip start time"
+                  aria-label="Clip start time in hh:mm:ss format"
                 />
                 <small id="startHelp" style={styles.helpText}>
                   Clip start time (hh:mm:ss)
@@ -146,13 +162,16 @@ function App() {
                   type="time"
                   step="1"
                   value={end}
-                  onChange={(e) => setEnd(e.target.value)}
+                  onChange={(e) => {
+                    const val = e.target.value;
+                    if(val >= start) setEnd(val);
+                  }}
                   style={styles.input}
                   min={start}
                   aria-describedby="endHelp"
                   disabled={loading}
                   pattern="\d{2}:\d{2}:\d{2}"
-                  aria-label="Clip end time"
+                  aria-label="Clip end time in hh:mm:ss format"
                 />
                 <small id="endHelp" style={styles.helpText}>
                   Clip end time (hh:mm:ss)
@@ -171,9 +190,9 @@ function App() {
               disabled={loading}
               aria-label="Select output quality"
             >
-              <option>1080p</option>
-              <option>720p</option>
-              <option>4K</option>
+              <option value="1080p">1080p</option>
+              <option value="720p">720p</option>
+              <option value="4K">4K</option>
             </select>
 
             <label htmlFor="style" style={styles.label}>
@@ -187,10 +206,10 @@ function App() {
               disabled={loading}
               aria-label="Select AI enhancement style"
             >
-              <option>Standard</option>
-              <option>Viral Optimized</option>
-              <option>Shorts Format</option>
-              <option>Podcast Cut</option>
+              <option value="Standard">Standard</option>
+              <option value="Viral Optimized">Viral Optimized</option>
+              <option value="Shorts Format">Shorts Format</option>
+              <option value="Podcast Cut">Podcast Cut</option>
             </select>
 
             <button
@@ -228,10 +247,11 @@ function App() {
                 role="alert"
                 style={{
                   marginTop: 20,
-                  color: message.startsWith("⚠️ Error") ? "#dc2626" : "#16a34a",
+                  color: message.startsWith("⚠️ Error") || message.startsWith("⚠️ Please") ? "#dc2626" : "#16a34a",
                   fontWeight: "600",
                   lineHeight: 1.5,
                   minHeight: 24,
+                  whiteSpace: "pre-line"
                 }}
               >
                 {message}
@@ -261,6 +281,7 @@ const styles = {
     display: "flex",
     flexDirection: "column",
     gap: 28,
+    userSelect: "none",
   },
   sidebarHeader: {
     marginBottom: 28,
@@ -281,7 +302,6 @@ const styles = {
     fontWeight: "600",
     borderRadius: 8,
     padding: "12px 18px",
-    userSelect: "none",
     transition: "background-color 0.25s ease",
     outline: "none",
   },
@@ -303,7 +323,7 @@ const styles = {
     boxShadow: "0 12px 30px rgba(0,0,0,0.12)",
     display: "flex",
     flexDirection: "column",
-    gap: 24,
+    gap: 32,
   },
   label: {
     fontWeight: "700",

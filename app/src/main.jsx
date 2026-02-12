@@ -29,18 +29,29 @@ createRoot(rootElement).render(
         outline: 'none',
         boxSizing: 'border-box',
         transition: 'background-color 0.3s ease',
-        // Improved spacing and structure for better legibility and whitespace
-        // Added subtle box shadow for content separation
-        boxShadow: '0 0 10px rgba(0,0,0,0.05)',
+        boxShadow: '0 0 12px rgba(0,0,0,0.08)', // Slightly stronger shadow for better content separation
         borderRadius: '8px',
       }}
-      tabIndex={-1} // improve focus management for screen readers
+      tabIndex={-1}
     >
-      {/* Added visually hidden heading for better screen reader navigation */}
       <h1 style={{position: 'absolute', width: '1px', height: '1px', padding: 0, margin: '-1px', overflow: 'hidden', clip: 'rect(0,0,0,0)', border: 0}}>
         SaaS Application Main Content
       </h1>
-      <App />
+      <React.Suspense fallback={
+        <div role="status" aria-live="polite" style={{
+          padding: '1rem',
+          textAlign: 'center',
+          fontSize: '1.125rem',
+          color: '#555',
+          backgroundColor: '#f0f0f0',
+          borderRadius: '6px',
+          boxShadow: 'inset 0 0 5px rgba(0,0,0,0.1)',
+        }}>
+          Loading application...
+        </div>
+      }>
+        <App />
+      </React.Suspense>
     </main>
   </StrictMode>,
 )
