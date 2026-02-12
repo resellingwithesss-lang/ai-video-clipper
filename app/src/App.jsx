@@ -14,6 +14,16 @@ function App() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+
+    if (!validYouTubeUrl(url.trim())) {
+      setMessage("⚠️ Please enter a valid YouTube URL before submitting.");
+      return;
+    }
+    if (end <= start) {
+      setMessage("⚠️ End time must be after start time.");
+      return;
+    }
+
     setLoading(true);
     setMessage("Processing clip with AI...");
 
@@ -86,7 +96,10 @@ function App() {
               id="urlInput"
               type="url"
               value={url}
-              onChange={(e) => setUrl(e.target.value)}
+              onChange={(e) => {
+                setUrl(e.target.value);
+                setMessage("");
+              }}
               placeholder="Paste YouTube link"
               required
               style={{
@@ -100,6 +113,7 @@ function App() {
               disabled={loading}
               autoComplete="off"
               autoFocus
+              aria-invalid={url && !validYouTubeUrl(url) ? true : false}
             />
             <small
               id="urlHelp"
@@ -110,6 +124,7 @@ function App() {
                     ? "#dc2626"
                     : "#6b7280",
               }}
+              aria-live="polite"
             >
               Enter a valid YouTube video URL
             </small>
@@ -124,7 +139,10 @@ function App() {
                   type="time"
                   step="1"
                   value={start}
-                  onChange={(e) => setStart(e.target.value)}
+                  onChange={(e) => {
+                    setStart(e.target.value);
+                    setMessage("");
+                  }}
                   style={styles.input}
                   max={end}
                   aria-describedby="startHelp"
@@ -146,7 +164,10 @@ function App() {
                   type="time"
                   step="1"
                   value={end}
-                  onChange={(e) => setEnd(e.target.value)}
+                  onChange={(e) => {
+                    setEnd(e.target.value);
+                    setMessage("");
+                  }}
                   style={styles.input}
                   min={start}
                   aria-describedby="endHelp"
@@ -196,18 +217,30 @@ function App() {
             <button
               type="submit"
               disabled={
-                loading || !url.trim() || !validYouTubeUrl(url)
+                loading || !url.trim() || !validYouTubeUrl(url) || end <= start
               }
               style={{
                 ...styles.button,
-                opacity: loading || !url.trim() || !validYouTubeUrl(url) ? 0.7 : 1,
+                opacity:
+                  loading || !url.trim() || !validYouTubeUrl(url) || end <= start
+                    ? 0.7
+                    : 1,
                 cursor:
-                  loading || !url.trim() || !validYouTubeUrl(url)
+                  loading || !url.trim() || !validYouTubeUrl(url) || end <= start
                     ? "not-allowed"
                     : "pointer",
               }}
               aria-live="polite"
               aria-label={loading ? "Processing AI clip" : "Generate AI Clip"}
+              title={
+                !url.trim()
+                  ? "YouTube URL is required"
+                  : !validYouTubeUrl(url)
+                  ? "Enter a valid YouTube URL"
+                  : end <= start
+                  ? "End time must be after start time"
+                  : "Generate AI Clip"
+              }
             >
               {loading ? (
                 <span>
@@ -228,11 +261,14 @@ function App() {
                 role="alert"
                 style={{
                   marginTop: 20,
-                  color: message.startsWith("⚠️ Error") ? "#dc2626" : "#16a34a",
+                  color: message.startsWith("⚠️ Error") || message.startsWith("⚠️")
+                    ? "#dc2626"
+                    : "#16a34a",
                   fontWeight: "600",
                   lineHeight: 1.5,
                   minHeight: 24,
                 }}
+                tabIndex={-1}
               >
                 {message}
               </p>
