@@ -19,14 +19,15 @@ createRoot(rootElement).render(
         minHeight: '100vh',
         display: 'flex',
         flexDirection: 'column',
-        padding: '2.5rem 2.5rem 4rem',
-        gap: '2.5rem',
+        padding: '3rem 3rem 5rem',
+        gap: '3rem',
         backgroundColor: '#f9fafb',
         maxWidth: '1200px',
         margin: '0 auto',
         fontFamily: "'Segoe UI', Tahoma, Geneva, Verdana, sans-serif",
         lineHeight: 1.6,
         outline: 'none',
+        boxSizing: 'border-box',
       }}
       tabIndex={-1} // improve focus management for screen readers
     >
