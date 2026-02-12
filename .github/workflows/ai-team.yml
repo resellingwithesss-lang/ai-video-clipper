@@ -1,8 +1,10 @@
 name: AI Team Continuous Improvement
 
 on:
+  workflow_dispatch:
   schedule:
-    - cron: "0 8 * * *"   # Runs once per day only
+    - cron: "0 8 * * *"
+  # Runs once per day only
 
 jobs:
   improve-project:
