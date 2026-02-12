@@ -1,4 +1,4 @@
-```python
+
 from fastapi import FastAPI, HTTPException, BackgroundTasks, Query
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse
@@ -178,4 +178,3 @@ def download(job_id: str):
         media_type="video/mp4",
         filename=safe_filename
     )
-```
