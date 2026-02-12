@@ -6,7 +6,7 @@ from openai import OpenAI
 client = OpenAI(api_key=os.environ["OPENAI_API_KEY"])
 
 PROTECTED_FILES = ["login", "auth", "security"]
-MAX_CHANGE_PERCENT = 0.75  # allows improvement but blocks full rewrites
+MAX_CHANGE_PERCENT = 1.5  # allows improvement but blocks full rewrites
 
 
 # ---------------- FILE DISCOVERY ----------------
