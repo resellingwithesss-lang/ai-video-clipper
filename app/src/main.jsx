@@ -11,7 +11,17 @@ if (!rootElement) {
 
 createRoot(rootElement).render(
   <StrictMode>
-    <div aria-busy="true" aria-live="polite" style={{minHeight: '100vh', display: 'flex', flexDirection: 'column'}}>
+    <div
+      aria-live="polite"
+      style={{
+        minHeight: '100vh',
+        display: 'flex',
+        flexDirection: 'column',
+        padding: '1rem',
+        gap: '1rem',
+        backgroundColor: '#f9fafb'
+      }}
+    >
       <App />
     </div>
   </StrictMode>,
