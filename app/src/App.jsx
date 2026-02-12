@@ -10,7 +10,9 @@ function App() {
   const [message, setMessage] = useState("");
 
   const validYouTubeUrl = (value) =>
-    /^https?:\/\/(www\.)?youtube\.com\/watch\?v=\S+|youtu\.be\/\S+/.test(value.trim());
+    /^https?:\/\/(www\.)?youtube\.com\/watch\?v=\S+|youtu\.be\/\S+/.test(
+      value.trim()
+    );
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -32,7 +34,11 @@ function App() {
       }
 
       setMessage("🎉 Clip successfully generated!");
-      window.open(`http://localhost:8000/download/${data.job_id}`, "_blank", "noopener,noreferrer");
+      window.open(
+        `http://localhost:8000/download/${data.job_id}`,
+        "_blank",
+        "noopener,noreferrer"
+      );
     } catch (err) {
       setMessage("⚠️ Error: " + err.message);
     }
@@ -68,7 +74,15 @@ function App() {
 
       <main style={styles.main}>
         <div style={styles.container}>
-          <h1 style={{ marginBottom: 32, fontWeight: "700" }}>
+          <h1
+            style={{
+              marginBottom: 32,
+              fontWeight: "700",
+              lineHeight: 1.2,
+              fontSize: 28,
+              color: "#111827",
+            }}
+          >
             AI Clip Generator Studio
           </h1>
 
@@ -92,24 +106,21 @@ function App() {
               style={{
                 ...styles.input,
                 borderColor:
-                  url && !validYouTubeUrl(url)
-                    ? "#dc2626"
-                    : "#cbd5e1",
+                  url && !validYouTubeUrl(url) ? "#dc2626" : "#cbd5e1",
               }}
               aria-describedby="urlHelp"
               disabled={loading}
               autoComplete="off"
               autoFocus
+              aria-invalid={url && !validYouTubeUrl(url)}
             />
             <small
               id="urlHelp"
               style={{
                 ...styles.helpText,
-                color:
-                  url && !validYouTubeUrl(url)
-                    ? "#dc2626"
-                    : "#6b7280",
+                color: url && !validYouTubeUrl(url) ? "#dc2626" : "#6b7280",
               }}
+              aria-live="assertive"
             >
               Enter a valid YouTube video URL
             </small>
@@ -195,12 +206,11 @@ function App() {
 
             <button
               type="submit"
-              disabled={
-                loading || !url.trim() || !validYouTubeUrl(url)
-              }
+              disabled={loading || !url.trim() || !validYouTubeUrl(url)}
               style={{
                 ...styles.button,
-                opacity: loading || !url.trim() || !validYouTubeUrl(url) ? 0.7 : 1,
+                opacity:
+                  loading || !url.trim() || !validYouTubeUrl(url) ? 0.7 : 1,
                 cursor:
                   loading || !url.trim() || !validYouTubeUrl(url)
                     ? "not-allowed"
@@ -228,7 +238,9 @@ function App() {
                 role="alert"
                 style={{
                   marginTop: 20,
-                  color: message.startsWith("⚠️ Error") ? "#dc2626" : "#16a34a",
+                  color: message.startsWith("⚠️ Error")
+                    ? "#dc2626"
+                    : "#16a34a",
                   fontWeight: "600",
                   lineHeight: 1.5,
                   minHeight: 24,
@@ -303,12 +315,12 @@ const styles = {
     boxShadow: "0 12px 30px rgba(0,0,0,0.12)",
     display: "flex",
     flexDirection: "column",
-    gap: 24,
+    gap: 28,
   },
   label: {
     fontWeight: "700",
     fontSize: "15px",
-    marginBottom: 8,
+    marginBottom: 10,
     display: "block",
     color: "#374151",
   },
@@ -328,13 +340,13 @@ const styles = {
     fontSize: 13,
     color: "#6b7280",
     marginTop: 6,
-    marginBottom: 18,
+    marginBottom: 20,
     fontWeight: 400,
   },
   timeInputsWrapper: {
     display: "flex",
     gap: 32,
-    marginBottom: 26,
+    marginBottom: 32,
   },
   timeInputContainer: {
     flex: 1,
