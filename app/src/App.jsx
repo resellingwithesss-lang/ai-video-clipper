@@ -50,6 +50,12 @@ function App() {
               role="link"
               aria-label={item}
               onKeyDown={(e) => e.key === "Enter" && e.currentTarget.click()}
+              onMouseOver={(e) =>
+                (e.currentTarget.style.backgroundColor = "#1f2937")
+              }
+              onMouseOut={(e) =>
+                (e.currentTarget.style.backgroundColor = "transparent")
+              }
             >
               {item}
             </li>
@@ -80,13 +86,28 @@ function App() {
               onChange={(e) => setUrl(e.target.value)}
               placeholder="Paste YouTube link"
               required
-              style={styles.input}
+              style={{
+                ...styles.input,
+                borderColor:
+                  url && !url.match(/^https?:\/\/(www\.)?youtube\.com\/watch\?v=\S+|youtu\.be\/\S+/)
+                    ? "#dc2626"
+                    : "#cbd5e1",
+              }}
               aria-describedby="urlHelp"
               disabled={loading}
               autoComplete="off"
               autoFocus
             />
-            <small id="urlHelp" style={styles.helpText}>
+            <small
+              id="urlHelp"
+              style={{
+                ...styles.helpText,
+                color:
+                  url && !url.match(/^https?:\/\/(www\.)?youtube\.com\/watch\?v=\S+|youtu\.be\/\S+/)
+                    ? "#dc2626"
+                    : "#6b7280",
+              }}
+            >
               Enter a valid YouTube video URL
             </small>
 
@@ -171,11 +192,14 @@ function App() {
 
             <button
               type="submit"
-              disabled={loading || !url.trim()}
+              disabled={
+                loading || !url.trim() || !url.match(/^https?:\/\/(www\.)?youtube\.com\/watch\?v=\S+|youtu\.be\/\S+/)
+              }
               style={{
                 ...styles.button,
-                opacity: loading ? 0.7 : 1,
-                cursor: loading ? "not-allowed" : "pointer",
+                opacity: loading || !url.trim() ? 0.7 : 1,
+                cursor:
+                  loading || !url.trim() ? "not-allowed" : "pointer",
               }}
               aria-live="polite"
               aria-label={loading ? "Processing AI clip" : "Generate AI Clip"}
@@ -291,8 +315,9 @@ const styles = {
     border: "1.8px solid #cbd5e1",
     fontSize: 15,
     boxSizing: "border-box",
-    transition: "border-color 0.25s ease",
+    transition: "border-color 0.25s ease, box-shadow 0.25s ease",
     fontFamily: "inherit",
+    outlineOffset: 2,
   },
   helpText: {
     fontSize: 13,
