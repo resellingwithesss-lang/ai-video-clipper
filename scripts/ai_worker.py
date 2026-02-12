@@ -1,12 +1,13 @@
 import os
 import subprocess
 import difflib
+import time
 from openai import OpenAI
 
 client = OpenAI(api_key=os.environ["OPENAI_API_KEY"])
 
 PROTECTED_FILES = ["login", "auth", "security"]
-MAX_CHANGE_PERCENT = 1.5  # allows improvement but blocks full rewrites
+MAX_CHANGE_PERCENT = 1.5  # Allows structural improvements safely
 
 
 # ---------------- FILE DISCOVERY ----------------
@@ -64,8 +65,8 @@ STRICT RULES:
 - Do NOT remove routes.
 - Do NOT modify authentication.
 - Do NOT rewrite entire architecture.
-- Improve structure, safety, validation, and performance.
-- Keep changes minimal and incremental.
+- Improve structure, validation, logging, safety, and performance.
+- Keep changes incremental.
 - Return FULL updated file.
 - Return code only. No explanations.
 
@@ -89,7 +90,9 @@ def main():
         print("No backend files found.")
         return
 
-    subprocess.run(["git", "checkout", "-B", "ai-improvements"])
+    # Create unique branch per run
+    branch_name = f"ai-improvement-{int(time.time())}"
+    subprocess.run(["git", "checkout", "-b", branch_name])
 
     for file in files:
         print(f"\n🔧 Improving {file}")
@@ -111,8 +114,11 @@ def main():
         write_file(file, improved_code)
         subprocess.run(["git", "add", file])
 
+    # Commit if changes exist
     subprocess.run(["git", "commit", "-m", "🤖 AI backend improvements"], check=False)
-    subprocess.run(["git", "push", "--force", "origin", "ai-improvements"])
+
+    # Push new branch
+    subprocess.run(["git", "push", "origin", branch_name])
 
 
 if __name__ == "__main__":
