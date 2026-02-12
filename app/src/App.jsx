@@ -1,151 +1,149 @@
-import axios from "axios";
-import { useState } from "react";
+import React, { useState } from "react";
 
-const API = "https://ai-clipper-backend.onrender.com";
-
-export default function App() {
-  const [email, setEmail] = useState("");
+function App() {
   const [url, setUrl] = useState("");
-  const [loggedIn, setLoggedIn] = useState(false);
+  const [start, setStart] = useState("");
+  const [end, setEnd] = useState("");
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
+  const [downloadUrl, setDownloadUrl] = useState("");
 
-  // LOGIN
-  const login = async () => {
-    if (!email.trim()) {
-      alert("Please enter your email");
-      return;
-    }
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setError("");
+    setDownloadUrl("");
+    setLoading(true);
+
     try {
-      setLoading(true);
-
-      await axios.post(
-        `${API}/login`,
-        { email: email },
+      const response = await fetch(
+        `https://ai-clipper-backend.onrender.com/clip?url=${encodeURIComponent(
+          url
+        )}&start=${start}&end=${end}`,
         {
-          headers: {
-            "Content-Type": "application/json"
-          }
+          method: "POST",
         }
       );
 
-      setLoggedIn(true);
-      setLoading(false);
-    } catch (err) {
-      console.error(err.response?.data || err);
-      alert("Login failed. Please check your email and try again.");
-      setLoading(false);
-    }
-  };
+      const data = await response.json();
 
-  // GENERATE CLIP
-  const generateClip = async () => {
-    if (!url.trim()) {
-      alert("Please enter a YouTube URL");
-      return;
-    }
-    try {
-      setLoading(true);
+      if (!response.ok) {
+        throw new Error(data.detail || "Error generating clip");
+      }
 
-      const res = await axios.post(
-        `${API}/clip`,
-        null,
-        {
-          params: {
-            url: url,
-            start: "0",
-            end: "10"
-          }
-        }
+      setDownloadUrl(
+        `https://ai-clipper-backend.onrender.com/download/${data.job_id}`
       );
-
-      window.open(res.data.download_url, "_blank");
-      setLoading(false);
     } catch (err) {
-      console.error(err.response?.data || err);
-      alert("Error generating clip. Please verify the URL and try again.");
-      setLoading(false);
+      setError(err.message);
     }
+
+    setLoading(false);
   };
 
-  const commonInputStyle = {
-    width: 360,
-    padding: 14,
-    fontSize: 16,
-    borderRadius: 6,
-    border: "1px solid #ccc",
-    boxSizing: "border-box"
-  };
+  return (
+    <div
+      style={{
+        maxWidth: "500px",
+        margin: "50px auto",
+        padding: "30px",
+        borderRadius: "12px",
+        boxShadow: "0 8px 20px rgba(0,0,0,0.1)",
+        fontFamily: "Arial, sans-serif",
+      }}
+    >
+      <h1 style={{ textAlign: "center" }}>AI Video Clipper</h1>
 
-  const containerStyle = {
-    maxWidth: 480,
-    margin: "120px auto",
-    textAlign: "center",
-    padding: 24,
-    boxShadow: "0 4px 8px rgba(0,0,0,0.1)",
-    borderRadius: 8,
-    backgroundColor: "#fff"
-  };
-
-  const buttonStyle = {
-    width: 180,
-    padding: "12px 0",
-    fontSize: 16,
-    borderRadius: 6,
-    border: "none",
-    cursor: loading ? "default" : "pointer",
-    backgroundColor: loading ? "#999" : "#007bff",
-    color: "white",
-    fontWeight: "600",
-    transition: "background-color 0.3s ease"
-  };
-
-  // LOGIN SCREEN
-  if (!loggedIn) {
-    return (
-      <div style={containerStyle}>
-        <h1 style={{ marginBottom: 24 }}>Login</h1>
-
+      <form onSubmit={handleSubmit}>
         <input
-          type="email"
-          style={commonInputStyle}
-          placeholder="Enter email"
-          value={email}
-          onChange={(e) => setEmail(e.target.value)}
-          disabled={loading}
-          onKeyDown={(e) => e.key === 'Enter' && !loading && login()}
-          aria-label="Email address"
+          type="text"
+          placeholder="Paste YouTube URL"
+          value={url}
+          onChange={(e) => setUrl(e.target.value)}
+          required
+          style={{
+            width: "100%",
+            padding: "10px",
+            marginBottom: "15px",
+            borderRadius: "6px",
+            border: "1px solid #ccc",
+          }}
         />
 
-        <div style={{ height: 20 }}></div>
+        <input
+          type="text"
+          placeholder="Start Time (HH:MM:SS)"
+          value={start}
+          onChange={(e) => setStart(e.target.value)}
+          required
+          style={{
+            width: "100%",
+            padding: "10px",
+            marginBottom: "5px",
+            borderRadius: "6px",
+            border: "1px solid #ccc",
+          }}
+        />
+        <p style={{ fontSize: "12px", color: "#666" }}>
+          Format: HH:MM:SS (example: 00:00:10)
+        </p>
 
-        <button onClick={login} disabled={loading || !email.trim()} style={buttonStyle}>
-          {loading ? "Loading..." : "Enter"}
+        <input
+          type="text"
+          placeholder="End Time (HH:MM:SS)"
+          value={end}
+          onChange={(e) => setEnd(e.target.value)}
+          required
+          style={{
+            width: "100%",
+            padding: "10px",
+            marginBottom: "5px",
+            borderRadius: "6px",
+            border: "1px solid #ccc",
+          }}
+        />
+        <p style={{ fontSize: "12px", color: "#666" }}>
+          Format: HH:MM:SS (example: 00:01:00)
+        </p>
+
+        <button
+          type="submit"
+          disabled={loading}
+          style={{
+            width: "100%",
+            padding: "12px",
+            marginTop: "15px",
+            backgroundColor: "#007bff",
+            color: "white",
+            border: "none",
+            borderRadius: "6px",
+            cursor: "pointer",
+            fontSize: "16px",
+          }}
+        >
+          {loading ? "Generating..." : "Generate Clip"}
         </button>
-      </div>
-    );
-  }
+      </form>
 
-  // MAIN APP
-  return (
-    <div style={containerStyle}>
-      <h1 style={{ marginBottom: 24 }}>AI Video Clipper</h1>
+      {error && (
+        <p style={{ color: "red", marginTop: "15px" }}>
+          {error}
+        </p>
+      )}
 
-      <input
-        type="url"
-        style={commonInputStyle}
-        placeholder="Paste YouTube URL"
-        value={url}
-        onChange={(e) => setUrl(e.target.value)}
-        disabled={loading}
-        onKeyDown={(e) => e.key === 'Enter' && !loading && generateClip()}
-        aria-label="YouTube URL"
-      />
-
-      <div style={{ height: 20 }}></div>
-
-      <button onClick={generateClip} disabled={loading || !url.trim()} style={buttonStyle}>
-        {loading ? "Generating..." : "Generate Clip"}
-      </button>
+      {downloadUrl && (
+        <div style={{ marginTop: "20px" }}>
+          <a
+            href={downloadUrl}
+            target="_blank"
+            rel="noopener noreferrer"
+            style={{ color: "#007bff", fontWeight: "bold" }}
+          >
+            Download Your Clip
+          </a>
+        </div>
+      )}
     </div>
   );
 }
+
+export default App;
