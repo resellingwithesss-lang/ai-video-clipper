@@ -4,6 +4,8 @@ from openai import OpenAI
 
 client = OpenAI(api_key=os.environ["OPENAI_API_KEY"])
 
+
+# 🔒 Only allow backend Python files (protect workflow + scripts)
 def get_repo_files():
     files = subprocess.check_output(
         "git ls-files", shell=True
@@ -14,13 +16,16 @@ def get_repo_files():
         if f.startswith("backend/") and f.endswith(".py")
     ]
 
+
 def read_file(path):
     with open(path, "r", encoding="utf-8", errors="ignore") as f:
         return f.read()
 
+
 def write_file(path, content):
     with open(path, "w", encoding="utf-8") as f:
         f.write(content)
+
 
 def improve_code(code):
     prompt = f"""
@@ -30,7 +35,10 @@ Rules:
 - Fix bugs
 - Improve structure
 - Improve performance
+- Add small improvements
 - DO NOT remove working endpoints
+- DO NOT modify authentication logic
+- DO NOT modify deployment configuration
 - Return ONLY valid Python code
 
 CODE:
@@ -42,6 +50,7 @@ CODE:
             model="gpt-4o-mini",
             input=prompt
         )
+
         return res.output_text
 
     except Exception as e:
