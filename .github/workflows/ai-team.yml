@@ -11,21 +11,18 @@ jobs:
       contents: write
 
     steps:
-      - name: Checkout repo
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v4
 
       - name: Create backup branch
         run: |
           git checkout -b backup-$(date +%s)
           git push origin HEAD
 
-      - name: Setup Python
-        uses: actions/setup-python@v5
+      - uses: actions/setup-python@v5
         with:
           python-version: "3.11"
 
-      - name: Install OpenAI
-        run: pip install --upgrade openai
+      - run: pip install --upgrade openai
 
       - name: Configure Git
         run: |

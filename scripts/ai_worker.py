@@ -7,20 +7,18 @@ from openai import OpenAI
 client = OpenAI(api_key=os.environ["OPENAI_API_KEY"])
 
 PROTECTED_FILES = ["login", "auth", "security"]
-MAX_CHANGE_PERCENT = 1.5
+MAX_CHANGE_PERCENT = 1.2
 
 
 def clean_code_output(text):
-    if text.startswith("```"):
-        text = text.strip()
-        lines = text.splitlines()
+    text = text.strip()
 
-        # Remove first and last fence
+    if text.startswith("```"):
+        lines = text.splitlines()
         if lines[0].startswith("```"):
             lines = lines[1:]
-        if lines[-1].startswith("```"):
+        if lines and lines[-1].startswith("```"):
             lines = lines[:-1]
-
         return "\n".join(lines)
 
     return text
@@ -55,29 +53,23 @@ def is_safe_change(original, modified):
     ))
 
     change_ratio = len(diff) / max(len(original.splitlines()), 1)
-
     print(f"Change ratio: {change_ratio:.2f}")
 
-    if change_ratio > MAX_CHANGE_PERCENT:
-        print("❌ Change too large. Skipping file.")
-        return False
-
-    return True
+    return change_ratio <= MAX_CHANGE_PERCENT
 
 
 def improve_code(code):
     prompt = f"""
 You are a senior FastAPI backend engineer improving a SaaS backend.
 
-STRICT RULES:
+Rules:
 - Do NOT delete endpoints.
-- Do NOT remove routes.
 - Do NOT modify authentication.
-- Do NOT rewrite entire architecture.
-- Improve structure, validation, logging, safety, and performance.
+- Do NOT change deployment logic.
+- Improve structure, validation, logging, safety.
 - Keep changes incremental.
-- Return FULL updated file.
-- Return code only. No markdown. No explanations.
+- Return full updated file.
+- Return code only. No markdown.
 
 CODE:
 {code}
@@ -88,7 +80,7 @@ CODE:
         input=prompt
     )
 
-    return clean_code_output(response.output_text.strip())
+    return clean_code_output(response.output_text)
 
 
 def main():
@@ -101,16 +93,13 @@ def main():
     branch_name = f"ai-improvement-{int(time.time())}"
     subprocess.run(["git", "checkout", "-b", branch_name])
 
-    for file in files:
-        print(f"\n🔧 Improving {file}")
+    changes_made = False
 
+    for file in files:
         original_code = read_file(file)
         improved_code = improve_code(original_code)
 
-        if not improved_code:
-            continue
-
-        if improved_code == original_code:
+        if not improved_code or improved_code == original_code:
             continue
 
         if not is_safe_change(original_code, improved_code):
@@ -118,9 +107,13 @@ def main():
 
         write_file(file, improved_code)
         subprocess.run(["git", "add", file])
+        changes_made = True
 
-    subprocess.run(["git", "commit", "-m", "🤖 AI backend improvements"], check=False)
-    subprocess.run(["git", "push", "origin", branch_name])
+    if changes_made:
+        subprocess.run(["git", "commit", "-m", "🤖 AI backend improvements"])
+        subprocess.run(["git", "push", "origin", branch_name])
+    else:
+        print("No safe changes detected.")
 
 
 if __name__ == "__main__":
