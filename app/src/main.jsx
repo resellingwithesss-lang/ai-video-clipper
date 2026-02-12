@@ -11,18 +11,23 @@ if (!rootElement) {
 
 createRoot(rootElement).render(
   <StrictMode>
-    <div
+    <main
       aria-live="polite"
+      aria-busy="false"
+      role="main"
       style={{
         minHeight: '100vh',
         display: 'flex',
         flexDirection: 'column',
-        padding: '1rem',
-        gap: '1rem',
-        backgroundColor: '#f9fafb'
+        padding: '1.5rem 1.5rem 2rem',
+        gap: '1.5rem',
+        backgroundColor: '#f9fafb',
+        maxWidth: '1200px',
+        margin: '0 auto',
+        fontFamily: "'Segoe UI', Tahoma, Geneva, Verdana, sans-serif",
       }}
     >
       <App />
-    </div>
+    </main>
   </StrictMode>,
 )

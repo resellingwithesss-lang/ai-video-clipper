@@ -18,6 +18,11 @@ function App() {
     setError("");
     setDownloadUrl("");
 
+    if (!url.trim()) {
+      setError("YouTube URL cannot be empty.");
+      return;
+    }
+
     if (!validateTime(start)) {
       setError("Start Time must be in HH:MM:SS format.");
       return;
@@ -57,24 +62,26 @@ function App() {
       style={{
         maxWidth: "480px",
         margin: "64px auto",
-        padding: "32px 32px 36px",
+        padding: "32px 32px 40px",
         borderRadius: "12px",
         boxShadow: "0 8px 24px rgba(0,0,0,0.12)",
         fontFamily: "'Segoe UI', Tahoma, Geneva, Verdana, sans-serif",
         backgroundColor: "#fff",
         display: "flex",
         flexDirection: "column",
-        gap: "28px"
+        gap: "32px"
       }}
       aria-live="polite"
     >
-      <h1 style={{ textAlign: "center", marginBottom: "24px", color: "#222", fontWeight: "700" }}>AI Video Clipper (Local)</h1>
+      <h1 style={{ textAlign: "center", marginBottom: "26px", color: "#222", fontWeight: "700", fontSize: "1.8rem" }}>
+        AI Video Clipper (Local)
+      </h1>
 
-      <form onSubmit={handleSubmit} noValidate aria-describedby="formError" style={{ display: "flex", flexDirection: "column", gap: "24px" }}>
+      <form onSubmit={handleSubmit} noValidate aria-describedby="formError" style={{ display: "flex", flexDirection: "column", gap: "28px" }}>
         <div style={{ display: "flex", flexDirection: "column" }}>
           <label
             htmlFor="urlInput"
-            style={{ marginBottom: "6px", fontWeight: "600", color: "#333", userSelect: "none" }}
+            style={{ marginBottom: "8px", fontWeight: "600", color: "#333", userSelect: "none" }}
           >
             YouTube URL
           </label>
@@ -88,25 +95,26 @@ function App() {
             autoComplete="off"
             style={{
               width: "100%",
-              padding: "10px 14px",
+              padding: "12px 16px",
               borderRadius: "6px",
-              border: `1.5px solid ${error.includes("URL") ? "#d93025" : "#ccc"}`,
+              border: `1.5px solid ${error.includes("URL") || error === "YouTube URL cannot be empty." ? "#d93025" : "#ccc"}`,
               fontSize: "15px",
               transition: "border-color 0.3s",
+              boxSizing: "border-box"
             }}
             aria-describedby="urlHelp"
-            aria-invalid={error.includes("URL") ? "true" : undefined}
+            aria-invalid={error.includes("URL") || error === "YouTube URL cannot be empty." ? "true" : undefined}
           />
-          <small id="urlHelp" style={{ marginTop: "6px", color: "#666", fontSize: "13px" }}>
+          <small id="urlHelp" style={{ marginTop: "6px", color: "#666", fontSize: "13px", lineHeight: "1.3" }}>
             Enter the full YouTube URL you want to clip.
           </small>
         </div>
 
-        <div style={{ display: "flex", gap: "20px", flexWrap: "wrap" }}>
+        <div style={{ display: "flex", gap: "24px", flexWrap: "wrap" }}>
           <div style={{ flex: "1 1 45%", minWidth: "160px", display: "flex", flexDirection: "column" }}>
             <label
               htmlFor="startInput"
-              style={{ marginBottom: "6px", fontWeight: "600", color: "#333", userSelect: "none" }}
+              style={{ marginBottom: "8px", fontWeight: "600", color: "#333", userSelect: "none" }}
             >
               Start Time (HH:MM:SS)
             </label>
@@ -121,11 +129,12 @@ function App() {
               inputMode="numeric"
               style={{
                 width: "100%",
-                padding: "10px 14px",
+                padding: "12px 16px",
                 borderRadius: "6px",
                 border: `1.5px solid ${error.includes("Start Time") ? "#d93025" : "#ccc"}`,
                 fontSize: "15px",
                 transition: "border-color 0.3s",
+                boxSizing: "border-box"
               }}
               aria-invalid={error.includes("Start Time") ? "true" : undefined}
             />
@@ -134,7 +143,7 @@ function App() {
           <div style={{ flex: "1 1 45%", minWidth: "160px", display: "flex", flexDirection: "column" }}>
             <label
               htmlFor="endInput"
-              style={{ marginBottom: "6px", fontWeight: "600", color: "#333", userSelect: "none" }}
+              style={{ marginBottom: "8px", fontWeight: "600", color: "#333", userSelect: "none" }}
             >
               End Time (HH:MM:SS)
             </label>
@@ -149,11 +158,12 @@ function App() {
               inputMode="numeric"
               style={{
                 width: "100%",
-                padding: "10px 14px",
+                padding: "12px 16px",
                 borderRadius: "6px",
                 border: `1.5px solid ${error.includes("End Time") ? "#d93025" : "#ccc"}`,
                 fontSize: "15px",
                 transition: "border-color 0.3s",
+                boxSizing: "border-box"
               }}
               aria-invalid={error.includes("End Time") ? "true" : undefined}
             />
@@ -165,12 +175,12 @@ function App() {
           disabled={loading}
           style={{
             width: "100%",
-            padding: "14px",
+            padding: "14px 0",
             backgroundColor: loading ? "#0056b3" : "#007bff",
             color: "white",
             border: "none",
             borderRadius: "6px",
-            cursor: loading ? "progress" : "pointer",
+            cursor: loading ? "wait" : "pointer",
             fontSize: "17px",
             fontWeight: "600",
             boxShadow: loading ? "none" : "0 4px 10px rgba(0,123,255,0.3)",
@@ -178,7 +188,9 @@ function App() {
             display: "flex",
             justifyContent: "center",
             alignItems: "center",
-            gap: "8px"
+            gap: "10px",
+            userSelect: "none",
+            WebkitTapHighlightColor: "transparent"
           }}
           aria-busy={loading}
           aria-label={loading ? "Generating clip" : "Generate clip"}
@@ -235,16 +247,17 @@ function App() {
       {downloadUrl && (
         <div
           style={{
-            marginTop: "16px",
+            marginTop: "20px",
             backgroundColor: "#d7f0ff",
             borderRadius: "8px",
-            padding: "16px 20px",
+            padding: "18px 24px",
             textAlign: "center",
             border: "1px solid #a1d4fb",
             fontSize: "16px",
             fontWeight: "600",
             userSelect: "text",
-            boxShadow: "0 2px 8px rgba(0,123,255,0.15)"
+            boxShadow: "0 2px 8px rgba(0,123,255,0.15)",
+            transition: "background-color 0.3s"
           }}
         >
           <a
@@ -256,6 +269,7 @@ function App() {
               fontWeight: "700",
               textDecoration: "underline",
               outlineOffset: "2px",
+              wordBreak: "break-word"
             }}
             aria-label="Download your clipped video"
           >
@@ -272,6 +286,9 @@ function App() {
         input:focus, button:focus {
           outline: 2px solid #007bff;
           outline-offset: 2px;
+        }
+        button:disabled {
+          opacity: 0.7;
         }
       `}</style>
     </div>
