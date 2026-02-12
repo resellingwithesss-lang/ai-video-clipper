@@ -9,7 +9,6 @@ jobs:
 
     permissions:
       contents: write
-      pull-requests: write
 
     steps:
       - name: Checkout repo
@@ -37,18 +36,3 @@ jobs:
         env:
           OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
         run: python scripts/ai_worker.py
-
-      - name: Create Pull Request
-        uses: peter-evans/create-pull-request@v6
-        with:
-          title: "🤖 AI Backend Improvements"
-          body: |
-            Automated backend improvements with guardrails enabled.
-
-            - Dynamic branch
-            - Authentication protected
-            - Incremental safe edits
-            - Manual merge required
-
-          commit-message: "🤖 AI backend improvements"
-          base: main
