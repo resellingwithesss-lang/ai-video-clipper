@@ -6,7 +6,7 @@ from openai import OpenAI
 
 client = OpenAI(api_key=os.environ["OPENAI_API_KEY"])
 
-MAX_CHANGE_PERCENT = 1.2
+MAX_CHANGE_PERCENT = 3.0
 FRONTEND_PATH = "app/src"
 
 
