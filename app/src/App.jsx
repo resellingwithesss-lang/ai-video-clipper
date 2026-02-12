@@ -9,6 +9,9 @@ function App() {
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState("");
 
+  const validYouTubeUrl = (value) =>
+    /^https?:\/\/(www\.)?youtube\.com\/watch\?v=\S+|youtu\.be\/\S+/.test(value.trim());
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
@@ -29,7 +32,7 @@ function App() {
       }
 
       setMessage("🎉 Clip successfully generated!");
-      window.open(`http://localhost:8000/download/${data.job_id}`);
+      window.open(`http://localhost:8000/download/${data.job_id}`, "_blank", "noopener,noreferrer");
     } catch (err) {
       setMessage("⚠️ Error: " + err.message);
     }
@@ -89,7 +92,7 @@ function App() {
               style={{
                 ...styles.input,
                 borderColor:
-                  url && !url.match(/^https?:\/\/(www\.)?youtube\.com\/watch\?v=\S+|youtu\.be\/\S+/)
+                  url && !validYouTubeUrl(url)
                     ? "#dc2626"
                     : "#cbd5e1",
               }}
@@ -103,7 +106,7 @@ function App() {
               style={{
                 ...styles.helpText,
                 color:
-                  url && !url.match(/^https?:\/\/(www\.)?youtube\.com\/watch\?v=\S+|youtu\.be\/\S+/)
+                  url && !validYouTubeUrl(url)
                     ? "#dc2626"
                     : "#6b7280",
               }}
@@ -193,13 +196,15 @@ function App() {
             <button
               type="submit"
               disabled={
-                loading || !url.trim() || !url.match(/^https?:\/\/(www\.)?youtube\.com\/watch\?v=\S+|youtu\.be\/\S+/)
+                loading || !url.trim() || !validYouTubeUrl(url)
               }
               style={{
                 ...styles.button,
-                opacity: loading || !url.trim() ? 0.7 : 1,
+                opacity: loading || !url.trim() || !validYouTubeUrl(url) ? 0.7 : 1,
                 cursor:
-                  loading || !url.trim() ? "not-allowed" : "pointer",
+                  loading || !url.trim() || !validYouTubeUrl(url)
+                    ? "not-allowed"
+                    : "pointer",
               }}
               aria-live="polite"
               aria-label={loading ? "Processing AI clip" : "Generate AI Clip"}
@@ -298,7 +303,7 @@ const styles = {
     boxShadow: "0 12px 30px rgba(0,0,0,0.12)",
     display: "flex",
     flexDirection: "column",
-    gap: 20,
+    gap: 24,
   },
   label: {
     fontWeight: "700",
@@ -310,7 +315,7 @@ const styles = {
   input: {
     width: "100%",
     padding: "14px 16px",
-    marginBottom: "16px",
+    marginBottom: 0,
     borderRadius: 8,
     border: "1.8px solid #cbd5e1",
     fontSize: 15,
@@ -322,13 +327,13 @@ const styles = {
   helpText: {
     fontSize: 13,
     color: "#6b7280",
-    marginTop: "-14px",
-    marginBottom: "18px",
+    marginTop: 6,
+    marginBottom: 18,
     fontWeight: 400,
   },
   timeInputsWrapper: {
     display: "flex",
-    gap: 28,
+    gap: 32,
     marginBottom: 26,
   },
   timeInputContainer: {

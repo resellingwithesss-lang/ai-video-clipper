@@ -20,7 +20,7 @@ createRoot(rootElement).render(
         display: 'flex',
         flexDirection: 'column',
         padding: '4rem 3rem 6rem',
-        gap: '2.5rem',
+        gap: '3rem',
         backgroundColor: '#f9fafb',
         maxWidth: '1200px',
         margin: '0 auto',
@@ -29,6 +29,10 @@ createRoot(rootElement).render(
         outline: 'none',
         boxSizing: 'border-box',
         transition: 'background-color 0.3s ease',
+        // Improved spacing and structure for better legibility and whitespace
+        // Added subtle box shadow for content separation
+        boxShadow: '0 0 10px rgba(0,0,0,0.05)',
+        borderRadius: '8px',
       }}
       tabIndex={-1} // improve focus management for screen readers
     >
