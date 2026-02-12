@@ -2,8 +2,6 @@ name: AI Team Continuous Improvement
 
 on:
   workflow_dispatch:
-  schedule:
-    - cron: "0 8 * * *"
 
 jobs:
   improve-project:
@@ -17,12 +15,17 @@ jobs:
       - name: Checkout repo
         uses: actions/checkout@v4
 
+      - name: Create backup branch
+        run: |
+          git checkout -b backup-$(date +%s)
+          git push origin HEAD
+
       - name: Setup Python
         uses: actions/setup-python@v5
         with:
           python-version: "3.11"
 
-      - name: Install OpenAI SDK
+      - name: Install OpenAI
         run: pip install --upgrade openai
 
       - name: Run AI Worker
@@ -34,13 +37,11 @@ jobs:
         uses: peter-evans/create-pull-request@v6
         with:
           branch: ai-improvements
-          title: "🤖 AI Backend Improvements"
+          title: "🤖 AI Backend Review"
           body: |
-            Automated backend improvements by AI Team.
+            Automated backend review.
 
-            - Code structure improvements
-            - Performance refinements
-            - Safe backend enhancements
+            Safe suggestions only.
 
-          commit-message: "🤖 AI backend improvements"
+          commit-message: "🤖 AI backend review"
           base: main
