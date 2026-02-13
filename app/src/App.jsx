@@ -42,7 +42,7 @@ function App() {
 
   return (
     <div style={styles.page}>
-      <nav style={styles.sidebar} aria-label="Primary">
+      <nav style={styles.sidebar} aria-label="Primary navigation">
         <h2 style={styles.sidebarHeader}>🎬 Creator AI</h2>
         <ul style={styles.navList}>
           {["Dashboard", "My Clips", "Analytics", "AI Tools"].map((item) => (
@@ -95,6 +95,10 @@ function App() {
                   url && !validYouTubeUrl(url)
                     ? "#dc2626"
                     : "#cbd5e1",
+                outline:
+                  url && !validYouTubeUrl(url)
+                    ? "2px solid #dc2626"
+                    : "none",
               }}
               aria-describedby="urlHelp"
               disabled={loading}
@@ -110,6 +114,7 @@ function App() {
                     ? "#dc2626"
                     : "#6b7280",
               }}
+              role={url && !validYouTubeUrl(url) ? "alert" : undefined}
             >
               Enter a valid YouTube video URL
             </small>
@@ -205,19 +210,23 @@ function App() {
                   loading || !url.trim() || !validYouTubeUrl(url)
                     ? "not-allowed"
                     : "pointer",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                gap: 12,
               }}
               aria-live="polite"
               aria-label={loading ? "Processing AI clip" : "Generate AI Clip"}
             >
               {loading ? (
-                <span>
+                <>
                   <span
                     className="spinner"
                     aria-hidden="true"
                     style={styles.spinner}
                   ></span>
                   Processing...
-                </span>
+                </>
               ) : (
                 "Generate AI Clip"
               )}
@@ -227,11 +236,11 @@ function App() {
               <p
                 role="alert"
                 style={{
-                  marginTop: 20,
+                  marginTop: 24,
                   color: message.startsWith("⚠️ Error") ? "#dc2626" : "#16a34a",
                   fontWeight: "600",
                   lineHeight: 1.5,
-                  minHeight: 24,
+                  minHeight: 28,
                 }}
               >
                 {message}
@@ -261,6 +270,7 @@ const styles = {
     display: "flex",
     flexDirection: "column",
     gap: 28,
+    boxSizing: "border-box",
   },
   sidebarHeader: {
     marginBottom: 28,
@@ -291,6 +301,7 @@ const styles = {
     overflowY: "auto",
     display: "flex",
     justifyContent: "center",
+    boxSizing: "border-box",
   },
   container: {
     width: "100%",
@@ -303,7 +314,7 @@ const styles = {
     boxShadow: "0 12px 30px rgba(0,0,0,0.12)",
     display: "flex",
     flexDirection: "column",
-    gap: 24,
+    gap: 28,
   },
   label: {
     fontWeight: "700",
@@ -323,6 +334,7 @@ const styles = {
     transition: "border-color 0.25s ease, box-shadow 0.25s ease",
     fontFamily: "inherit",
     outlineOffset: 2,
+    outline: "none",
   },
   helpText: {
     fontSize: 13,
@@ -362,8 +374,6 @@ const styles = {
     border: "3px solid rgba(255, 255, 255, 0.6)",
     borderTopColor: "#fff",
     borderRadius: "50%",
-    marginRight: 12,
-    verticalAlign: "middle",
     animation: "spin 1s linear infinite",
   },
 };

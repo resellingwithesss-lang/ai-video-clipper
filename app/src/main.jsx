@@ -33,6 +33,9 @@ createRoot(rootElement).render(
         // Added subtle box shadow for content separation
         boxShadow: '0 0 10px rgba(0,0,0,0.05)',
         borderRadius: '8px',
+        // Added padding inside for better content separation
+        paddingLeft: '3.5rem',
+        paddingRight: '3.5rem',
       }}
       tabIndex={-1} // improve focus management for screen readers
     >
