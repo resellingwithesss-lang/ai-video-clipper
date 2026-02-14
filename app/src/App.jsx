@@ -1,381 +1,314 @@
-import React, { useState } from "react";
+import { useState, useEffect, useRef } from "react";
+import "./App.css";
+
+const API_BASE = import.meta.env.VITE_API_URL || "http://localhost:8000";
 
 function App() {
   const [url, setUrl] = useState("");
-  const [start, setStart] = useState("00:00:00");
-  const [end, setEnd] = useState("00:00:30");
-  const [quality, setQuality] = useState("1080p");
-  const [style, setStyle] = useState("Standard");
-  const [loading, setLoading] = useState(false);
-  const [message, setMessage] = useState("");
+  const [clipDuration, setClipDuration] = useState(30);
+  const [phase, setPhase] = useState("input"); // input | processing | results
+  const [job, setJob] = useState(null);
+  const [error, setError] = useState("");
+  const pollRef = useRef(null);
 
-  const validYouTubeUrl = (value) =>
-    /^https?:\/\/(www\.)?youtube\.com\/watch\?v=\S+|youtu\.be\/\S+/.test(value.trim());
+  const isValidUrl = (v) =>
+    /^https?:\/\/(www\.)?(youtube\.com\/watch\?v=|youtu\.be\/)\S+/.test(
+      v.trim()
+    );
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    setLoading(true);
-    setMessage("Processing clip with AI...");
+  // ----- submit -----
+  const handleSubmit = async () => {
+    if (!isValidUrl(url)) return;
+    setError("");
+    setPhase("processing");
+    setJob({
+      status: "downloading",
+      completed_clips: 0,
+      total_clips: 0,
+      clips: [],
+      video_title: "",
+    });
 
     try {
-      const response = await fetch(
-        `http://localhost:8000/clip?url=${encodeURIComponent(
-          url
-        )}&start=${start}&end=${end}`,
-        { method: "POST" }
-      );
-
-      const data = await response.json();
-
-      if (!response.ok) {
-        throw new Error(data.detail || "Error generating clip");
+      const res = await fetch(`${API_BASE}/process`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ url: url.trim(), clip_duration: clipDuration }),
+      });
+      if (!res.ok) {
+        const d = await res.json();
+        throw new Error(d.detail || "Failed to start processing");
       }
-
-      setMessage("🎉 Clip successfully generated!");
-      window.open(`http://localhost:8000/download/${data.job_id}`, "_blank", "noopener,noreferrer");
+      const { job_id } = await res.json();
+      startPolling(job_id);
     } catch (err) {
-      setMessage("⚠️ Error: " + err.message);
+      setError(err.message);
+      setPhase("input");
     }
-
-    setLoading(false);
   };
 
+  // ----- polling -----
+  const startPolling = (jobId) => {
+    const poll = async () => {
+      try {
+        const res = await fetch(`${API_BASE}/jobs/${jobId}`);
+        const data = await res.json();
+        setJob(data);
+        if (data.status === "done") {
+          setPhase("results");
+          return;
+        }
+        if (data.status === "error") {
+          setError(data.error || "Processing failed");
+          setPhase("input");
+          return;
+        }
+      } catch {
+        /* retry */
+      }
+      pollRef.current = setTimeout(poll, 1500);
+    };
+    poll();
+  };
+
+  useEffect(() => {
+    return () => {
+      if (pollRef.current) clearTimeout(pollRef.current);
+    };
+  }, []);
+
+  const reset = () => {
+    if (pollRef.current) clearTimeout(pollRef.current);
+    setUrl("");
+    setPhase("input");
+    setJob(null);
+    setError("");
+  };
+
+  const fmt = (s) => {
+    const m = Math.floor(s / 60);
+    const sec = Math.floor(s % 60);
+    return `${m}:${sec.toString().padStart(2, "0")}`;
+  };
+
+  // ===================== RENDER =====================
+
   return (
-    <div style={styles.page}>
-      <nav style={styles.sidebar} aria-label="Primary navigation">
-        <h2 style={styles.sidebarHeader}>🎬 Creator AI</h2>
-        <ul style={styles.navList}>
-          {["Dashboard", "My Clips", "Analytics", "AI Tools"].map((item) => (
-            <li
-              key={item}
-              style={styles.navItem}
-              tabIndex={0}
-              role="link"
-              aria-label={item}
-              onKeyDown={(e) => e.key === "Enter" && e.currentTarget.click()}
-              onMouseOver={(e) =>
-                (e.currentTarget.style.backgroundColor = "#1f2937")
-              }
-              onMouseOut={(e) =>
-                (e.currentTarget.style.backgroundColor = "transparent")
-              }
-            >
-              {item}
-            </li>
-          ))}
-        </ul>
-      </nav>
+    <div className="app">
+      {/* ---- header ---- */}
+      <header className="header">
+        <div className="logo" onClick={reset}>
+          <span className="logo-icon">&#9654;</span>
+          <span className="logo-text">ClipForge</span>
+        </div>
+        {phase !== "input" && (
+          <button className="header-btn" onClick={reset}>
+            + New Project
+          </button>
+        )}
+      </header>
 
-      <main style={styles.main}>
-        <div style={styles.container}>
-          <h1 style={{ marginBottom: 32, fontWeight: "700" }}>
-            AI Clip Generator Studio
-          </h1>
-
-          <form
-            onSubmit={handleSubmit}
-            style={styles.card}
-            aria-live="polite"
-            aria-busy={loading}
-            noValidate
-          >
-            <label htmlFor="urlInput" style={styles.label}>
-              YouTube URL
-            </label>
-            <input
-              id="urlInput"
-              type="url"
-              value={url}
-              onChange={(e) => setUrl(e.target.value)}
-              placeholder="Paste YouTube link"
-              required
-              style={{
-                ...styles.input,
-                borderColor:
-                  url && !validYouTubeUrl(url)
-                    ? "#dc2626"
-                    : "#cbd5e1",
-                outline:
-                  url && !validYouTubeUrl(url)
-                    ? "2px solid #dc2626"
-                    : "none",
-              }}
-              aria-describedby="urlHelp"
-              disabled={loading}
-              autoComplete="off"
-              autoFocus
-            />
-            <small
-              id="urlHelp"
-              style={{
-                ...styles.helpText,
-                color:
-                  url && !validYouTubeUrl(url)
-                    ? "#dc2626"
-                    : "#6b7280",
-              }}
-              role={url && !validYouTubeUrl(url) ? "alert" : undefined}
-            >
-              Enter a valid YouTube video URL
-            </small>
-
-            <div style={styles.timeInputsWrapper}>
-              <div style={styles.timeInputContainer}>
-                <label htmlFor="startTime" style={styles.label}>
-                  Start Time
-                </label>
-                <input
-                  id="startTime"
-                  type="time"
-                  step="1"
-                  value={start}
-                  onChange={(e) => setStart(e.target.value)}
-                  style={styles.input}
-                  max={end}
-                  aria-describedby="startHelp"
-                  disabled={loading}
-                  pattern="\d{2}:\d{2}:\d{2}"
-                  aria-label="Clip start time"
-                />
-                <small id="startHelp" style={styles.helpText}>
-                  Clip start time (hh:mm:ss)
-                </small>
-              </div>
-
-              <div style={styles.timeInputContainer}>
-                <label htmlFor="endTime" style={styles.label}>
-                  End Time
-                </label>
-                <input
-                  id="endTime"
-                  type="time"
-                  step="1"
-                  value={end}
-                  onChange={(e) => setEnd(e.target.value)}
-                  style={styles.input}
-                  min={start}
-                  aria-describedby="endHelp"
-                  disabled={loading}
-                  pattern="\d{2}:\d{2}:\d{2}"
-                  aria-label="Clip end time"
-                />
-                <small id="endHelp" style={styles.helpText}>
-                  Clip end time (hh:mm:ss)
-                </small>
-              </div>
+      <div className="content">
+        {/* ==================== INPUT ==================== */}
+        {phase === "input" && (
+          <div className="input-phase fade-in">
+            <div className="hero">
+              <h1 className="hero-title">
+                Turn any video into
+                <span className="gradient-text">
+                  {" "}
+                  viral short-form content
+                </span>
+              </h1>
+              <p className="hero-sub">
+                Paste a YouTube link. Get perfectly cropped 9:16 vertical clips
+                ready for TikTok, Reels &amp; Shorts.
+              </p>
             </div>
 
-            <label htmlFor="quality" style={styles.label}>
-              Output Quality
-            </label>
-            <select
-              id="quality"
-              value={quality}
-              onChange={(e) => setQuality(e.target.value)}
-              style={styles.input}
-              disabled={loading}
-              aria-label="Select output quality"
-            >
-              <option>1080p</option>
-              <option>720p</option>
-              <option>4K</option>
-            </select>
-
-            <label htmlFor="style" style={styles.label}>
-              AI Enhancement Style
-            </label>
-            <select
-              id="style"
-              value={style}
-              onChange={(e) => setStyle(e.target.value)}
-              style={styles.input}
-              disabled={loading}
-              aria-label="Select AI enhancement style"
-            >
-              <option>Standard</option>
-              <option>Viral Optimized</option>
-              <option>Shorts Format</option>
-              <option>Podcast Cut</option>
-            </select>
-
-            <button
-              type="submit"
-              disabled={
-                loading || !url.trim() || !validYouTubeUrl(url)
-              }
-              style={{
-                ...styles.button,
-                opacity: loading || !url.trim() || !validYouTubeUrl(url) ? 0.7 : 1,
-                cursor:
-                  loading || !url.trim() || !validYouTubeUrl(url)
-                    ? "not-allowed"
-                    : "pointer",
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-                gap: 12,
-              }}
-              aria-live="polite"
-              aria-label={loading ? "Processing AI clip" : "Generate AI Clip"}
-            >
-              {loading ? (
-                <>
-                  <span
-                    className="spinner"
-                    aria-hidden="true"
-                    style={styles.spinner}
-                  ></span>
-                  Processing...
-                </>
-              ) : (
-                "Generate AI Clip"
-              )}
-            </button>
-
-            {message && (
-              <p
-                role="alert"
-                style={{
-                  marginTop: 24,
-                  color: message.startsWith("⚠️ Error") ? "#dc2626" : "#16a34a",
-                  fontWeight: "600",
-                  lineHeight: 1.5,
-                  minHeight: 28,
+            <div className="input-card">
+              <input
+                className={`url-input ${url && !isValidUrl(url) ? "url-input--invalid" : ""}`}
+                type="url"
+                value={url}
+                onChange={(e) => {
+                  setUrl(e.target.value);
+                  setError("");
                 }}
+                placeholder="https://youtube.com/watch?v=..."
+                onKeyDown={(e) => e.key === "Enter" && handleSubmit()}
+                autoFocus
+              />
+
+              {url && !isValidUrl(url) && (
+                <p className="url-error">Enter a valid YouTube URL</p>
+              )}
+
+              <div className="options-row">
+                <div className="option-group">
+                  <span className="option-label">Clip Length</span>
+                  <div className="pill-group">
+                    {[
+                      { value: 30, label: "30 s" },
+                      { value: 60, label: "60 s" },
+                      { value: 90, label: "90 s" },
+                    ].map((d) => (
+                      <button
+                        key={d.value}
+                        type="button"
+                        className={`pill ${clipDuration === d.value ? "pill--active" : ""}`}
+                        onClick={() => setClipDuration(d.value)}
+                      >
+                        {d.label}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                <div className="option-group">
+                  <span className="option-label">Format</span>
+                  <div className="badge">9:16 Vertical</div>
+                </div>
+
+                <div className="option-group">
+                  <span className="option-label">Export</span>
+                  <div className="badge">1080 &times; 1920</div>
+                </div>
+              </div>
+
+              <button
+                className="submit-btn"
+                onClick={handleSubmit}
+                disabled={!url.trim() || !isValidUrl(url)}
               >
-                {message}
-              </p>
-            )}
-          </form>
-        </div>
-      </main>
+                Generate Clips
+              </button>
+
+              {error && <p className="error-msg">{error}</p>}
+            </div>
+
+            <div className="features">
+              {[
+                {
+                  icon: "\u26A1",
+                  title: "Auto-Split",
+                  desc: "Splits the full video into multiple short clips automatically",
+                },
+                {
+                  icon: "\uD83D\uDCD0",
+                  title: "9:16 Reframe",
+                  desc: "Center-cropped vertical format for every platform",
+                },
+                {
+                  icon: "\uD83C\uDFAC",
+                  title: "Studio Quality",
+                  desc: "1080\u00D71920 H.264 with 192 kbps AAC audio",
+                },
+              ].map((f) => (
+                <div key={f.title} className="feature-card">
+                  <span className="feature-icon">{f.icon}</span>
+                  <strong className="feature-title">{f.title}</strong>
+                  <span className="feature-desc">{f.desc}</span>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* ==================== PROCESSING ==================== */}
+        {phase === "processing" && job && (
+          <div className="processing-phase fade-in">
+            <div className="processing-card">
+              <div className="spinner-wrap">
+                <div className="spinner-ring" />
+              </div>
+
+              <h2 className="processing-title">
+                {job.status === "downloading"
+                  ? "Downloading video\u2026"
+                  : "Creating your clips\u2026"}
+              </h2>
+
+              {job.video_title && (
+                <p className="video-title">{job.video_title}</p>
+              )}
+
+              {job.status === "processing" && job.total_clips > 0 && (
+                <>
+                  <div className="progress-bar">
+                    <div
+                      className="progress-fill"
+                      style={{
+                        width: `${(job.completed_clips / job.total_clips) * 100}%`,
+                      }}
+                    />
+                  </div>
+                  <p className="progress-text">
+                    {job.completed_clips} of {job.total_clips} clips ready
+                  </p>
+                </>
+              )}
+
+              {job.status === "downloading" && (
+                <p className="progress-text">
+                  Fetching from YouTube&hellip; this may take a moment.
+                </p>
+              )}
+            </div>
+          </div>
+        )}
+
+        {/* ==================== RESULTS ==================== */}
+        {phase === "results" && job && (
+          <div className="results-phase fade-in">
+            <div className="results-header">
+              <div>
+                <h2 className="results-title">
+                  {job.clips.length} clips ready
+                </h2>
+                {job.video_title && (
+                  <p className="results-subtitle">{job.video_title}</p>
+                )}
+              </div>
+              <a
+                href={`${API_BASE}/clips/${job.job_id}/download-all`}
+                className="download-all-btn"
+              >
+                <span className="dl-icon">&#8595;</span> Download All (.zip)
+              </a>
+            </div>
+
+            <div className="clips-grid">
+              {job.clips.map((clip) => (
+                <div key={clip.index} className="clip-card">
+                  <div className="clip-visual">
+                    <span className="clip-number">#{clip.index + 1}</span>
+                    <div className="clip-aspect">9:16</div>
+                  </div>
+                  <div className="clip-body">
+                    <div className="clip-times">
+                      <span>
+                        {fmt(clip.start)} &ndash;{" "}
+                        {fmt(clip.start + clip.duration)}
+                      </span>
+                      <span className="clip-dur">{clip.duration}s</span>
+                    </div>
+                    <span className="clip-spec">1080&times;1920 &middot; H.264</span>
+                    <a
+                      href={`${API_BASE}/clips/${job.job_id}/${clip.index}`}
+                      className="clip-dl-btn"
+                    >
+                      Download
+                    </a>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+      </div>
     </div>
   );
 }
-
-const styles = {
-  page: {
-    display: "flex",
-    height: "100vh",
-    fontFamily: "'Segoe UI', Tahoma, Geneva, Verdana, sans-serif",
-    backgroundColor: "#f4f6f9",
-    color: "#111827",
-    fontSize: 16,
-  },
-  sidebar: {
-    width: "220px",
-    backgroundColor: "#111827",
-    color: "white",
-    padding: "32px 24px",
-    display: "flex",
-    flexDirection: "column",
-    gap: 28,
-    boxSizing: "border-box",
-  },
-  sidebarHeader: {
-    marginBottom: 28,
-    fontWeight: "700",
-    fontSize: "26px",
-  },
-  navList: {
-    listStyle: "none",
-    padding: 0,
-    margin: 0,
-    display: "flex",
-    flexDirection: "column",
-    gap: 18,
-  },
-  navItem: {
-    color: "white",
-    cursor: "pointer",
-    fontWeight: "600",
-    borderRadius: 8,
-    padding: "12px 18px",
-    userSelect: "none",
-    transition: "background-color 0.25s ease",
-    outline: "none",
-  },
-  main: {
-    flex: 1,
-    padding: "56px 60px",
-    overflowY: "auto",
-    display: "flex",
-    justifyContent: "center",
-    boxSizing: "border-box",
-  },
-  container: {
-    width: "100%",
-    maxWidth: 640,
-  },
-  card: {
-    background: "white",
-    padding: "44px 48px",
-    borderRadius: 16,
-    boxShadow: "0 12px 30px rgba(0,0,0,0.12)",
-    display: "flex",
-    flexDirection: "column",
-    gap: 28,
-  },
-  label: {
-    fontWeight: "700",
-    fontSize: "15px",
-    marginBottom: 8,
-    display: "block",
-    color: "#374151",
-  },
-  input: {
-    width: "100%",
-    padding: "14px 16px",
-    marginBottom: 0,
-    borderRadius: 8,
-    border: "1.8px solid #cbd5e1",
-    fontSize: 15,
-    boxSizing: "border-box",
-    transition: "border-color 0.25s ease, box-shadow 0.25s ease",
-    fontFamily: "inherit",
-    outlineOffset: 2,
-    outline: "none",
-  },
-  helpText: {
-    fontSize: 13,
-    color: "#6b7280",
-    marginTop: 6,
-    marginBottom: 18,
-    fontWeight: 400,
-  },
-  timeInputsWrapper: {
-    display: "flex",
-    gap: 32,
-    marginBottom: 26,
-  },
-  timeInputContainer: {
-    flex: 1,
-    display: "flex",
-    flexDirection: "column",
-  },
-  button: {
-    width: "100%",
-    padding: "18px",
-    backgroundColor: "#2563eb",
-    color: "white",
-    border: "none",
-    borderRadius: 12,
-    fontSize: 17,
-    fontWeight: "700",
-    transition: "background-color 0.3s ease",
-    userSelect: "none",
-    boxShadow:
-      "0 4px 8px rgba(37, 99, 235, 0.4), 0 1px 2px rgba(0, 0, 0, 0.1)",
-  },
-  spinner: {
-    display: "inline-block",
-    width: 20,
-    height: 20,
-    border: "3px solid rgba(255, 255, 255, 0.6)",
-    borderTopColor: "#fff",
-    borderRadius: "50%",
-    animation: "spin 1s linear infinite",
-  },
-};
 
 export default App;
